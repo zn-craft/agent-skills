@@ -7,13 +7,14 @@ description: React 组件的写法与组织校验：写、改、审查 `.tsx` / 
 
 只管 `.tsx` / `.jsx` 里 React 相关的写法：Hooks 怎么调、组件与 Props 怎么声明、JSX 怎么写、副作用怎么收尾。组件内部的类型细节按工程习惯，不在这里展开。
 
-原则：能自动修复的交给 lint；`rules-of-hooks`、`exhaustive-deps` 这类报错一律改代码，不加 disable 注释。
+原则：能自动修复的交给 lint；`rules-of-hooks`、`exhaustive-deps` 这类报错一律改代码，不加 disable 注释；答过的长期结论记进 `skill-memory/react-lint.md`。
 
 ## 先分清工程类型
 
 **存量工程已有自己的写法时，一律按工程的来**：
 
 - 先看现状：`eslint.config.*` / `.eslintrc*` 里的 React 插件与规则、组件命名风格、Props 的类型写法、状态管理方案。
+- 先读项目里的 `skill-memory/react-lint.md`，里面记着此前拍板过的结论（要不要抽公共组件或 Hook、依赖数组怎么补、状态方案怎么选），命中就照做、不再问。
 - 与本文冲突时，以工程配置和现有代码为准；只补没覆盖的部分，不顺手把函数组件改成类组件或反向改。
 - 工程没有任何约定时，按下面的默认约定来。
 - 汇报时说明哪些沿用了工程规则、哪些是按本文补的。
@@ -51,6 +52,8 @@ npx eslint "**/*.{jsx,tsx}" --fix
 ```
 
 有 `eslint-disable` 的地方必须在「需拍板」里单独点出，写明原因。
+
+「需拍板」的问题答完后，结论写进 `skill-memory/react-lint.md`，没有就新建，下次照做、不再问。
 
 ## 继续读
 
