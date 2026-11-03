@@ -17,6 +17,30 @@
 - 跨 SSR / hydration 生成稳定 ID 时使用 `useId`，不要使用随机值或时间戳。
 - “先服务端渲染占位，再在 Effect 切换客户端内容”会增加一次渲染，只在必要且接受体验代价时使用。
 
+例如，密度偏好只存在浏览器时，服务端和客户端首次渲染都用默认密度。挂载后再恢复已保存的值。
+
+```tsx
+"use client";
+
+import { useEffect, useState } from "react";
+
+export function DensityLabel() {
+  const [density, setDensity] = useState<"normal" | "compact">("normal");
+
+  useEffect(() => {
+    let saved: string | null;
+    try {
+      saved = window.localStorage.getItem("table-density");
+    } catch {
+      return; // 存储不可用时保留默认值。
+    }
+    if (saved === "compact") setDensity("compact");
+  }, []);
+
+  return <span>{density === "compact" ? "紧凑" : "标准"}</span>;
+}
+```
+
 ## 数据与诊断
 
 - 优先使用框架的数据加载、路由 loader 或缓存机制；避免把可在服务端并行取得的数据拆成客户端 Effect 请求瀑布。

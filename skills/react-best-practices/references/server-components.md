@@ -24,6 +24,31 @@
 - `useActionState` / `useOptimistic` 是 React Hooks，可参与客户端 Action / Transition；不要将它们定义为“仅服务端 API”。
 - Server Functions、表单 Actions、缓存和重验证依赖框架集成；先查当前框架版本文档，不自行假设底层协议。
 
+例如，项目改名只允许所有者操作。客户端提供项目 ID 和新名称，调用者身份从服务端会话取得。
+
+```ts
+"use server";
+
+import { getSessionUser } from "./session";
+import { updateProjectName } from "./projects";
+
+export async function renameProject(projectId: unknown, name: unknown) {
+  if (typeof projectId !== "string" || !projectId.trim() || typeof name !== "string") {
+    return { ok: false, error: "输入不合法" };
+  }
+  const title = name.trim();
+  if (!title || title.length > 80) return { ok: false, error: "名称长度不合法" };
+
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "请先登录" };
+
+  const updated = await updateProjectName({ projectId, ownerId: user.id, title });
+  return updated ? { ok: true } : { ok: false, error: "无法更新项目" };
+}
+```
+
+`updateProjectName` 在同一次写入中匹配项目 ID 和所有者 ID，返回是否更新到记录。资源不存在和无权修改使用同一条对外错误。
+
 ## 安全提醒
 
 服务端代码不自动安全。每次数据访问都应执行授权；所有外部输入都要验证；隐藏按钮不能代替服务端权限控制。关注框架与 React Server Components 包的安全公告，及时升级受影响版本。

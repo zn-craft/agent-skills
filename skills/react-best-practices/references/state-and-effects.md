@@ -25,6 +25,21 @@
 
 通常不需要 Effect：派生数据、格式化、点击后提交、由用户动作直接触发的请求、仅为同步两个 React State。
 
+例如，筛选结果只取决于 `users` 和 `keyword`。可以去掉这份 state 和同步 Effect。
+
+```tsx
+// 改前：先渲染旧结果，再由 Effect 更新。
+const [visibleUsers, setVisibleUsers] = useState<User[]>([]);
+useEffect(() => {
+  setVisibleUsers(users.filter((user) => user.name.includes(keyword)));
+}, [users, keyword]);
+```
+
+```tsx
+// 改后：本次渲染直接使用当前输入算出结果。
+const visibleUsers = users.filter((user) => user.name.includes(keyword));
+```
+
 - Effect 必须声明它读取的响应式依赖。依赖不合预期时，先调整 Effect 读什么，再改依赖数组。
 - 建立持续资源 / 订阅时必须提供对称清理；一次性同步（如同步 `document.title`）不需要空清理函数。
 - setup 与 cleanup 应成对；在 Strict Mode 开发环境下应能承受额外的 setup → cleanup → setup。
