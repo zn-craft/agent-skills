@@ -1,6 +1,6 @@
 ---
 name: react-best-practices
-description: 写、改或评审 React 组件时使用。涵盖组件拆分、状态归属、Hooks、Effect、数据请求、渲染和交互性能。涉及 SSR 或 RSC 时按项目版本查阅对应规则。不处理构建配置、通用 TypeScript 类型设计或 CSS 规范。
+description: 写、改或评审 React 组件时使用。涵盖组件拆分、状态归属、Hooks、Effect、数据请求、渲染和交互性能。涉及 SSR 或 RSC 时按项目版本查阅对应规则。不处理构建配置、TypeScript 类型设计或 CSS 规范。
 ---
 
 # React 最佳实践
@@ -14,6 +14,7 @@ description: 写、改或评审 React 组件时使用。涵盖组件拆分、状
 - 点击保存就在提交处理函数里发请求。订阅外部数据、注册监听器或启动定时器时，用 Effect 同步，并清理上一次建立的资源。
 - 有独立职责或会单独变化的 UI 再拆组件。要复用有状态的行为时抽 Hook，纯计算用普通函数。两段 JSX 看着一样，先看它们会不会因同一个原因改变。
 - 查询和缓存沿用项目已有数据层。手写请求时处理失败，并防止旧结果覆盖新结果。
+- 组件默认写成 `const A = (props) => {...}`，文件末尾 `export { A }`；入口文件被框架或懒加载要求默认导出时才用 `export default`。
 - 按场景处理加载、空结果、失败和键盘操作。
 
 改代码时沿着当前交互看一遍，顺手省掉重复计算和无关更新，保持原有行为。
@@ -29,7 +30,6 @@ description: 写、改或评审 React 组件时使用。涵盖组件拆分、状
 | 状态归属、派生值、Effect | [state-and-effects.md](references/state-and-effects.md) |
 | 组件职责、内部组织、Props 接口和父子通信 | [components.md](references/components.md) |
 | 何时抽 Hook、调用规则、参数和返回值 | [hooks.md](references/hooks.md) |
-| React 的 Props、事件、ref 类型 | [typing.md](references/typing.md) |
 | JSX 写法、DOM、交互和可访问性 | [web-ui.md](references/web-ui.md) |
 | 请求触发、缓存和竞态 | [client-data.md](references/client-data.md) |
 | 改输入、滚动、长列表或重复计算，或排查渲染卡顿 | [performance.md](references/performance.md) |
