@@ -32,17 +32,40 @@
 
 状态用类名表达（`isLoading`、`hasError`），不靠 `:nth-child` 或相邻选择器推断。
 
+## 把清单落成一个组件
+
+```css
+/* ✓ 一个按钮把清单上的状态补齐，颜色全部来自语义 token */
+.button {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+}
+.button:hover { background: var(--color-primary-hover); }
+.button:active { background: var(--color-primary-active); }
+.button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.button:disabled,
+.button.isLoading { opacity: 0.6; cursor: not-allowed; }
+```
+
+深色主题只换 `:root` 上的变量，这段规则一行不用重写；缺哪个状态，对着上面的清单补一行。
+
 ## 聚焦与动效
 
 ```css
-.button:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
+/* ✗ 收掉聚焦框，键盘用户找不到当前位置 */
+.button:focus-visible { outline: none; }
+
+/* ✗ 过渡所有属性，改一个颜色也连带动画 */
+.card { transition: all 0.2s; }
+
+/* ✓ 只过渡要动的属性 */
+.card { transition: background-color 0.2s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .dialog { transition: none; }
+  .card { transition: none; }
 }
 ```
 
-不用 `outline: none` 收掉聚焦框，要自定义就换成可见的描边或阴影；过渡只写具体属性，不写 `transition: all`。
+聚焦框不用 `outline: none` 收掉，自定义就换成看得见的描边或阴影；过渡只写具体属性，用户开了减少动效就把过渡关掉。

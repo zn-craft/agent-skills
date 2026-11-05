@@ -24,7 +24,7 @@
 
 import { useEffect, useState } from "react";
 
-export function DensityLabel() {
+const DensityLabel = () => {
   const [density, setDensity] = useState<"normal" | "compact">("normal");
 
   useEffect(() => {
@@ -38,7 +38,9 @@ export function DensityLabel() {
   }, []);
 
   return <span>{density === "compact" ? "紧凑" : "标准"}</span>;
-}
+};
+
+export { DensityLabel };
 ```
 
 ## 数据与诊断

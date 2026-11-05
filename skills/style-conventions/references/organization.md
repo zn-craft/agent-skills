@@ -30,6 +30,24 @@ src/
 
 组件样式写在组件目录里，`styles/` 只留跨组件的部分。`.module.css` 换成 `.vue` 的 scoped `<style>`、`.wxss` 或 Tailwind 的入口文件，位置不变。
 
+## 一段新样式落在哪
+
+```css
+/* 卡片头和标题的间距：只有这个组件用 → 跟组件走 */
+/* components/userCard/userCard.module.css */
+.cardHeader { display: flex; gap: var(--space-2); }
+
+/* 截断：三个组件共用、不绑业务 → 进公共片段 */
+/* src/styles/utilities.css */
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 拉平组件库圆角：走它开放的变量出口 → 进第三方覆盖层 */
+/* src/styles/vendors.css */
+:root { --el-border-radius-base: var(--radius-sm); }
+```
+
+判断顺序：先看是不是这一个组件独有，再看是不是多个组件共用，最后才看是不是第三方出口。
+
 ## 公共与私有分开
 
 公共文件里的每条规则都要能说出谁在用，说不出就是放错了地方。

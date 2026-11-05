@@ -37,6 +37,29 @@
 
 `clamp()` 的中值是过渡量，上限下限必须是 token 里的取值。
 
+## 一个组件从窄到宽
+
+```css
+/* ✓ 卡片在窄容器里竖排、宽容器里两列，中间档位交给流式尺寸 */
+.card {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-3);
+  padding-inline: clamp(var(--space-4), 5vw, var(--space-6));
+}
+
+.cardMedia { aspect-ratio: 16 / 9; }
+
+@container (width >= 480px) {
+  .card { grid-template-columns: 160px 1fr; align-items: start; }
+  .cardMedia { aspect-ratio: auto; block-size: 100%; }
+}
+
+.cardTitle { font-size: clamp(1rem, 0.9rem + 0.6vw, 1.25rem); }
+```
+
+从窄到宽只改了列数，字号和内边距全程连续变化，中间没有额外断点。
+
 ## 收尾
 
 在 320px 与 1440px 各看一次，再把浏览器字号调到 125% 看一次。

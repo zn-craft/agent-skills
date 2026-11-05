@@ -13,6 +13,30 @@
 5. 拆 mock、测试按需要补，不做就留空。
 6. 收尾：跑 typecheck、lint、测试；确认没有文件既在旧位置又在目录里。
 
+## 拆分前后对照
+
+```ts
+// 之前：单文件，实现与类型混在一起，外部直接指到这个文件
+// src/utils/formatDate.ts
+export interface IFormatDateOptions { locale?: string; }
+export const formatDate = (value: Date, options: IFormatDateOptions = {}) => { /* … */ };
+
+// 调用方
+import { formatDate } from "@/utils/formatDate";
+```
+
+```text
+之后：import 路径不变，文件换成目录，由 index.ts 恢复对外契约
+src/utils/formatDate/
+├── index.ts             # export { formatDate } from "./formatDate";
+│                        # export type { IFormatDateOptions } from "./formatDate.type";
+├── formatDate.ts
+├── formatDate.type.ts   # IFormatDateOptions
+└── formatDate.test.ts
+```
+
+先补 `index.ts` 让编译恢复，再逐个移 `xx.type.ts`、`xx.config.ts`，每移一次跑一遍 typecheck；外部调用点一行都不用改。
+
 ## 把散落文件归整成目录
 
 - 判断依据是"谁和谁永远一起改"，不是文件名像不像。

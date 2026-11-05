@@ -21,13 +21,13 @@
 ## Props 设计示意
 
 ```tsx
-type DialogProps = {
+interface IDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-};
+}
 ```
 
 这是受控接口示意，不是完整 Dialog 实现。完整组件还需处理 portal、焦点、键盘、滚动锁定、ARIA 和 SSR 兼容等细节。

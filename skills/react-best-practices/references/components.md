@@ -27,7 +27,8 @@ return (
 );
 ```
 
-- Props 表达调用方真实需求；事件 Props 用 `onXxx`，内部处理函数可用 `handleXxx`。
+- Props 表达调用方真实需求；事件 Props 用 `onXxx`，内部处理函数可用 `handleXxx`。Prop 名用 camelCase，值是组件类型时用 PascalCase，如 `Component={Row}`。
+- 不要把 `style`、`className` 这类 DOM 名当业务语义用，例如用 `style="dark"` 传主题，改用语义化名称。组件包裹根元素时透传 `className` 是常规做法，不在此列。
 - 受控组件由调用方提供 `value` / `checked` 与回调；非受控组件使用 `defaultValue` / `defaultChecked`。避免维护与外部值同步的镜像 State。
 - 若多个 Props 组合会形成互相矛盾的状态，评估判别式联合、组合 API 或拆分组件。
 - Props 多不必然设计差；先检查重复职责、配置爆炸和业务耦合。

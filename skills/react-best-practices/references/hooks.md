@@ -10,11 +10,13 @@
 如果隐藏面板时要保留草稿，把提前返回放到 `useState` 后面。这里假设调用方只是切换 `visible`，组件始终挂载。
 
 ```tsx
-function EditPanel({ visible }: { visible: boolean }) {
+const EditPanel = ({ visible }: { visible: boolean }) => {
   const [draft, setDraft] = useState("");
   if (!visible) return null;
   return <input aria-label="草稿" value={draft} onChange={(e) => setDraft(e.currentTarget.value)} />;
-}
+};
+
+export { EditPanel };
 ```
 
 ## 何时抽取
