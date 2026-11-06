@@ -161,7 +161,8 @@ async function main() {
   console.log("\n下一步：");
   console.log(`  1. 补全 ${relative}/SKILL.md 里的 TODO`);
   console.log(`  2. node scripts/validate-skills.mjs ${relative}`);
-  console.log("  3. 在 README.md 的 skills 表格里登记");
+  console.log(`  3. node scripts/score-skills.mjs ${relative}`);
+  console.log("  4. 在 README.md 和 README.en.md 的 skills 表格里各登记一行");
 }
 
 await main();

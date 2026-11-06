@@ -9,6 +9,8 @@
 1. **按单条安装**：使用者只装自己需要的那一个 skill，不需要克隆整个仓库。
 2. **零依赖使用**：skill 目录自包含，装到本地即可用。
 
+分层架构、skill 之间的协作方式与扩展计划见 [ROADMAP.md](ROADMAP.md)。
+
 ## 目录结构
 
 ```text
@@ -25,10 +27,14 @@ agent-skills/
 │   ├── new-skill.mjs              # 生成 skill 骨架
 │   ├── validate-skills.mjs        # 校验所有 skill
 │   ├── score-skills.mjs           # 给 skill 打分（合入门禁，8.5 分）
+│   ├── build-roadmap-diagrams.mjs # 生成 ROADMAP 里的配图（中英各一套）
 │   ├── install-skill.sh           # 安装单条 skill 到任意 agent（macOS / Linux / WSL / Git Bash）
 │   └── install-skill.ps1          # 安装单条 skill 到任意 agent（Windows PowerShell）
 ├── .github/workflows/             # 提交后自动校验与评分
+├── docs/                          # ROADMAP 的配图，中英各一套
 ├── AGENTS.md                      # 给 AI agent 的仓库约定
+├── ROADMAP.md                     # 分层架构、协作方式与扩展路线
+├── ROADMAP.en.md                  # 同上（英文）
 ├── CONTRIBUTING.md                # 新增 skill 的流程
 └── CONTRIBUTING.en.md             # 新增 skill 的流程（英文）
 ```
@@ -85,11 +91,13 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\install-skill.ps1 <skill-name
 
 | Skill | 说明 | 安装 |
 | --- | --- | --- |
-| [frontend-project-baseline](skills/frontend-project-baseline) | 给前端项目建立、补齐或修改工程化基线：包管理器与运行时约束、TypeScript、格式化与静态检查、环境变量模板、提交门禁、CI 必过项。新建项目定技术约束、存量项目接入 lint / 格式化 / 类型检查 / git hooks / CI、评审工程化是否达标，以及改动 ESLint、Prettier、tsconfig、stylelint、husky、CI 等工程化配置时使用。与框架无关，单包与 monorepo 都适用；附配置探测脚本与可复制模板。不负责业务目录与模块职责划分，也不覆盖构建产物优化、版本发布和 monorepo 划分 | `npx skills add zn-craft/agent-skills --skill frontend-project-baseline` |
-| [js-module-structure](skills/js-module-structure) | 规定 JS/TS 非后端项目的模块目录、文件职责与命名导出约定。新建模块，写工具方法库或组件库，给前端应用加 api / store / hooks / utils / 组件 / 页面，或在 React、Vue、原生小程序、Taro、uni-app 项目里拆分与归整目录时使用。只在创建或重组 JS/TS 代码的文件与目录时使用，后端服务端工程不适用 | `npx skills add zn-craft/agent-skills --skill js-module-structure` |
-| [code-comments](skills/code-comments) | 规定注释该写什么、什么时候必须写、什么时候删掉，以及旧注释怎么处置。写或改代码、配置文件时使用，也用于整理遗留注释。不管 lint 规则、注释格式化、API 文档生成和提交信息 | `npx skills add zn-craft/agent-skills --skill code-comments` |
-| [style-conventions](skills/style-conventions) | 规定样式该怎么写：类名与作用域、变量与设计 token、选择器特异性、布局与响应式断点、主题与交互状态、行内样式与运行期值、全局样式边界与文件组织。新增或修改组件样式、把设计稿落成 CSS / SCSS / Less，写 CSS Modules、Vue scoped、Tailwind 或小程序 wxss，以及排查样式互相覆盖与魔法值时使用。不负责样式检查工具的配置、构建产物优化和视觉设计评审 | `npx skills add zn-craft/agent-skills --skill style-conventions` |
-| [frontend-code-lint](skills/frontend-code-lint) | 前端代码语法与风格校验：`.ts` 查命名、类型、导入导出和 TSLint 迁移，`.tsx` 查 Hooks、JSX、Props 与副作用，`.css` / `.scss` / `.less` 查命名、嵌套、`!important` 和 stylelint 规则；也用于给老工程补类型。老工程已有规则时以工程为准。不适用于纯 JS、后端工程和业务逻辑重构 | `npx skills add zn-craft/agent-skills --skill frontend-code-lint` |
+| [frontend-project-baseline](skills/frontend-project-baseline) | 给前端项目建立、补齐或修改工程化基线：包管理器与运行时约束、TypeScript、格式化与静态检查、环境变量模板、提交门禁、CI 必过项。新建项目定技术约束、存量项目接入 lint / 格式化 / 类型检查 / git hooks / CI、评审工程化是否达标，以及改动 ESLint、Prettier、tsconfig、stylelint、husky、CI 等工程化配置时使用。与框架无关，单包与 monorepo 都适用；附配置探测脚本与可复制模板。不负责业务目录与模块职责划分，也不覆盖构建产物优化、版本发布和 monorepo 划分。 | `npx skills add zn-craft/agent-skills --skill frontend-project-baseline` |
+| [js-module-structure](skills/js-module-structure) | 规定 JS/TS 非后端项目的模块目录、文件职责与命名导出约定。新建模块，写工具方法库或组件库，给前端应用加 api / store / hooks / utils / 组件 / 页面，往已有模块补类型、常量、mock、样式或测试，或在 React、Vue、原生小程序、Taro、uni-app 项目里拆分与归整目录时使用。只在创建、重组 JS/TS 代码，或决定代码放进哪个文件时使用，后端服务端工程不适用。 | `npx skills add zn-craft/agent-skills --skill js-module-structure` |
+| [code-comments](skills/code-comments) | 规定注释该写什么、什么时候必须写、什么时候删掉，以及旧注释怎么处置。写或改代码、配置文件时使用，也用于整理遗留注释。不管 lint 规则、注释格式化、API 文档生成和提交信息。 | `npx skills add zn-craft/agent-skills --skill code-comments` |
+| [style-conventions](skills/style-conventions) | 规定样式该怎么写：类名与作用域、变量与设计 token、选择器特异性、布局与响应式断点、主题与交互状态、行内样式与运行期值、全局样式边界与文件组织。新增或修改组件样式、把设计稿落成 CSS / SCSS / Less，写 CSS Modules、Vue scoped、Tailwind 或小程序 wxss，以及排查样式互相覆盖与魔法值时使用。不负责样式检查工具的配置、构建产物优化和视觉设计评审。 | `npx skills add zn-craft/agent-skills --skill style-conventions` |
+| [js-best-practices](skills/js-best-practices) | JavaScript 语言层写法与结构决策：写、改或评审 JS/TS 代码时使用。规定命名、函数形态（默认箭头函数）、控制流与值处理、集合用法（数字与日期、字符串与克隆）、异步写法、错误处理，以及类与继承、循环与缓存的取舍。不负责 TypeScript 类型建模、模块目录与框架组件、注释和构建 / lint 配置。 | `npx skills add zn-craft/agent-skills --skill js-best-practices` |
+| [typescript-best-practices](skills/typescript-best-practices) | TypeScript 的类型建模与写法决策：新建、修改、评审或重构 TS 代码时使用。定类型怎么建（interface / type / 联合 / 枚举 / as const）、边界数据怎么从 unknown 收窄、any 与断言怎么过渡、错误与领域概念怎么用类型表达、严格度怎么取舍，以及 `.tsx` 里组件 Props、事件、ref 和泛型组件的类型。通用 JS 风格、模块目录与 JSX 渲染，以及 tsconfig 和 lint 配置都不管。 | `npx skills add zn-craft/agent-skills --skill typescript-best-practices` |
+| [react-best-practices](skills/react-best-practices) | 写、改或评审 React 组件时使用。涵盖组件拆分、状态归属、Hooks、Effect、数据请求、渲染和交互性能。涉及 SSR 或 RSC 时按项目版本查阅对应规则。不处理构建配置、TypeScript 类型设计或 CSS 规范。 | `npx skills add zn-craft/agent-skills --skill react-best-practices` |
 
 ## 新增一个 skill
 
@@ -113,7 +121,7 @@ node scripts/validate-skills.mjs             # 校验 skills/ 下全部 skill
 node scripts/validate-skills.mjs skills/foo  # 只校验一个
 ```
 
-校验内容：frontmatter 的 `name`/`description` 是否齐全、`name` 是否与目录名一致、正文是否有未完成的占位内容、是否混入符号链接或附属文档。仓库的 GitHub Actions 会在 push 和 PR 时自动跑同一套校验。
+校验内容：frontmatter 的 `name`/`description` 是否齐全、`name` 是否与目录名一致、正文是否有未完成的占位内容、README 的说明列是否与 `description` 一致、是否混入符号链接或附属文档。仓库的 GitHub Actions 会在 push 和 PR 时自动跑同一套校验。
 
 需要 Node 18+，没有其它依赖。
 

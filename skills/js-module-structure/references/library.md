@@ -11,7 +11,7 @@ src/
 ├── index.ts                    # 包入口，只 re-export 各能力的 index.ts
 ├── formatDate/
 │   ├── index.ts                # export { formatDate } from "./formatDate";
-│   │                           # export type { FormatDateOptions } from "./formatDate.type";
+│   │                           # export type { IFormatDateOptions } from "./formatDate.type";
 │   ├── formatDate.ts           # 主逻辑
 │   ├── formatDate.config.ts    # 默认格式、时区、语言映射
 │   ├── formatDate.type.ts      # Options / 返回值类型
@@ -34,7 +34,7 @@ src/
 ├── index.ts                    # export { Button } from "./button";
 ├── button/
 │   ├── index.ts                # export { Button } from "./button";
-│   │                           # export type { ButtonProps, ButtonVariant } from "./button.type";
+│   │                           # export type { IButtonProps, ButtonVariant } from "./button.type";
 │   ├── button.tsx              # 组件主逻辑，只处理渲染与交互
 │   ├── button.config.ts        # variant / size → class 映射、默认值
 │   ├── button.type.ts          # props、事件、导出的枚举类型

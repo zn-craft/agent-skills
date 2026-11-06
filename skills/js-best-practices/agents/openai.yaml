@@ -1,0 +1,4 @@
+interface:
+  display_name: "js-best-practices"
+  short_description: "JavaScript 语言层写法、结构决策与错误处理"
+  default_prompt: "用 $js-best-practices 定 JavaScript 的命名、函数形态、控制流与错误处理写法"

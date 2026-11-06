@@ -5,7 +5,7 @@
 ```text
 userCard/
 ├── index.ts              # export { default as UserCard } from "./userCard.vue";
-│                         # export type { UserCardProps } from "./userCard.type";
+│                         # export type { IUserCardProps } from "./userCard.type";
 ├── userCard.vue          # <script setup lang="ts">，样式默认写在 <style scoped> 里
 ├── userCard.config.ts    # 状态映射、默认值、样式常量
 ├── userCard.type.ts      # props / emits / 对外类型

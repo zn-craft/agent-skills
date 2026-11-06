@@ -9,9 +9,10 @@
 ```text
 api/
 ├── index.ts
-├── userApi.ts          # 请求函数
-├── userApi.type.ts     # User、UserQuery、UserListResponse
-├── userApi.mock.ts     # makeUser()，给测试和本地调试用
+├── userApi.ts           # 请求函数
+├── userApi.type.ts      # IUser、IUserQuery、IUserListResponse
+├── userApi.config.ts    # USER_API 路径表、DEFAULT_PAGE_SIZE
+├── userApi.mock.ts      # makeUser()，给测试和本地调试用
 └── userApi.test.ts
 ```
 
@@ -60,3 +61,99 @@ hooks/
 - 同模块内部：相对路径直连目标文件。
 - 跨模块：import 对方的 `index.ts`，不要深挖到 `other/impl/detail.ts`，否则对方的目录调整会波及你。
 - 只被一个模块用的东西放在那个模块里，不要提前放进共享目录。
+
+## 文件内容对照
+
+### api 模块：四个文件各写什么
+
+```ts
+// userApi.type.ts：请求与响应的结构全在这里
+export interface IUser {
+  id: string;
+  name: string;
+}
+
+export interface IUserQuery {
+  keyword?: string;
+  page?: number;
+}
+
+export interface IUserListResponse {
+  items: IUser[];
+  total: number;
+}
+```
+
+```ts
+// userApi.config.ts：接口路径与默认分页收在一处
+export const USER_API = {
+  list: "/api/users",
+  detail: (id: string) => `/api/users/${id}`,
+} as const;
+
+export const DEFAULT_PAGE_SIZE = 20;
+```
+
+```ts
+// userApi.ts：只拼参数、发请求、返回类型化数据
+import { DEFAULT_PAGE_SIZE, USER_API } from "./userApi.config";
+import type { IUserListResponse, IUserQuery } from "./userApi.type";
+
+export const fetchUserList = (
+  query: IUserQuery = {},
+): Promise<IUserListResponse> => {
+  const params = new URLSearchParams({
+    page: String(query.page ?? 1),
+    size: String(DEFAULT_PAGE_SIZE),
+  });
+  return http.get<IUserListResponse>(`${USER_API.list}?${params}`);
+};
+```
+
+```ts
+// userApi.mock.ts：工厂函数能覆盖关键分支
+import type { IUser } from "./userApi.type";
+
+export const makeUser = (overrides: Partial<IUser> = {}): IUser => ({
+  id: "u_1",
+  name: "张三",
+  ...overrides,
+});
+```
+
+### hooks 模块：默认值从 config 取
+
+```ts
+// useDebounce.type.ts
+export interface IUseDebounceOptions {
+  delay?: number;
+  leading?: boolean;
+}
+```
+
+```ts
+// useDebounce.config.ts
+export const DEFAULT_DEBOUNCE_MS = 300;
+```
+
+```ts
+// useDebounce.ts：一个文件只写一个能力
+import { useEffect, useState } from "react";
+
+import { DEFAULT_DEBOUNCE_MS } from "./useDebounce.config";
+import type { IUseDebounceOptions } from "./useDebounce.type";
+
+export const useDebounce = <T,>(value: T, options: IUseDebounceOptions = {}) => {
+  const { delay = DEFAULT_DEBOUNCE_MS } = options;
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
+};
+```
+
+主逻辑只 import 类型和配置，不反过来被它们依赖；`xx.type.ts` 里不放运行时代码，`xx.config.ts` 里不放副作用。

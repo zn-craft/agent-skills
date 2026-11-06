@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1358 650" width="1358" height="650" role="img" aria-label="How the skills work together">
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <rect width="1358" height="650" fill="#ffffff"/>
+  <text x="56" y="58" font-size="25" font-weight="700" fill="#0f172a" text-anchor="start">How the skills work together</text>
+  <text x="56" y="86" font-size="13" font-weight="400" fill="#64748b" text-anchor="start">Each skill installs on its own and hands off through fixed seams; outside those seams they never reference each other.</text>
+  <text x="56" y="128" font-size="13" font-weight="400" fill="#64748b" text-anchor="start">One React + TS change fires several skills at once; four seams carry the handoff:</text>
+  <rect x="56" y="250" width="200" height="118" rx="14" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/><text x="72" y="279" font-size="14" font-weight="650" fill="#5b21b6" text-anchor="start">js-best-practices</text><text x="72" y="300" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Language-level style</text><text x="72" y="315" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Naming / async / errors</text>
+  <path d="M264 309 L314 309" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <circle cx="289" cy="309" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="289" y="313" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">1</text>
+  <rect x="322" y="250" width="200" height="118" rx="14" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/><text x="338" y="279" font-size="12.5" font-weight="650" fill="#5b21b6" text-anchor="start">typescript-best-practices</text><text x="338" y="300" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Type modeling</text><text x="338" y="315" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Narrowing / leaving assertions</text>
+  <path d="M530 309 L580 309" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <circle cx="555" cy="309" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="555" y="313" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">2</text>
+  <rect x="588" y="250" width="200" height="118" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/><text x="604" y="279" font-size="14" font-weight="650" fill="#1d4ed8" text-anchor="start">js-module-structure</text><text x="604" y="300" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Directory and file roles</text><text x="604" y="315" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Public surface</text>
+  <path d="M796 309 L846 309" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <circle cx="821" cy="309" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="821" y="313" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">3</text>
+  <rect x="854" y="250" width="200" height="118" rx="14" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5"/><text x="870" y="279" font-size="14" font-weight="650" fill="#065f46" text-anchor="start">react-best-practices</text><text x="870" y="300" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Component behavior</text><text x="870" y="315" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">State / Effects / performance</text>
+  <path d="M1062 309 L1112 309" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <circle cx="1087" cy="309" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1087" y="313" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">4</text>
+  <rect x="1120" y="250" width="200" height="118" rx="14" fill="#fff1f2" stroke="#fecdd3" stroke-width="1.5"/><text x="1136" y="279" font-size="14" font-weight="650" fill="#9f1239" text-anchor="start">style-conventions</text><text x="1136" y="300" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Style placement</text><text x="1136" y="315" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">Tokens / scoping / breakpoints</text>
+  <circle cx="67" cy="400" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="67" y="404" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">1</text>
+  <text x="86" y="404" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">Failure semantics</text>
+  <circle cx="213.8" cy="400" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="213.8" y="404" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">2</text>
+  <text x="232.8" y="404" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">Type placement</text>
+  <circle cx="360.6" cy="400" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="360.6" y="404" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">3</text>
+  <text x="379.6" y="404" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">Public surface</text>
+  <circle cx="494.20000000000005" cy="400" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="494.20000000000005" y="404" font-size="11.5" font-weight="650" fill="#64748b" text-anchor="middle">4</text>
+  <text x="513.2" y="404" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">Style placement</text>
+  <rect x="56" y="168" width="1246" height="52" rx="12" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="76" y="200" font-size="13" font-weight="400" fill="#9a3412" text-anchor="start">code-comments · cuts across every layer: what to write, when it is required, when to delete</text>
+  <rect x="56" y="442" width="1246" height="64" rx="14" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+  <text x="76" y="470" font-size="12.5" font-weight="400" fill="#3730a3" text-anchor="start">frontend-project-baseline · constrains every layer: lockfile, tsconfig strictness, lint rule levels, commit gates, required CI</text>
+  <text x="76" y="492" font-size="11" font-weight="400" fill="#64748b" text-anchor="start">When two skills disagree it wins; changing its config is a separate migration decision</text>
+  <text x="56" y="562" font-size="13.5" font-weight="650" fill="#0f172a" text-anchor="start">Precedence (earlier wins)</text>
+  <rect x="56" y="580" width="168" height="38" rx="10" fill="#eef2ff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="140" y="604" font-size="11.5" font-weight="400" fill="#3730a3" text-anchor="middle">Explicit user request</text>
+  <text x="224" y="604" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="middle">→</text>
+  <rect x="232" y="580" width="168" height="38" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="316" y="604" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="middle">Project state and lint</text>
+  <text x="400" y="604" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="middle">→</text>
+  <rect x="408" y="580" width="168" height="38" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="492" y="604" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="middle">Framework-specific rules</text>
+  <text x="576" y="604" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="middle">→</text>
+  <rect x="584" y="580" width="168" height="38" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="668" y="604" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="middle">Structure conventions</text>
+  <text x="752" y="604" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="middle">→</text>
+  <rect x="760" y="580" width="168" height="38" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="844" y="604" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="middle">Type rules</text>
+  <text x="928" y="604" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="middle">→</text>
+  <rect x="936" y="580" width="168" height="38" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="1020" y="604" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="middle">Language defaults</text>
+</svg>
