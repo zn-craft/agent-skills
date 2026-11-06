@@ -12,7 +12,7 @@
     // 框架不需要处理 JSX 时删掉这一行
     "jsx": "preserve",
 
-    // 严格度总开关，一次带上下面大部分检查项。存量项目按分档顺序一档一档开
+    // 严格度总开关。下面这三项不在 strict 里，单独列出；存量项目按分档顺序一档一档开
     "strict": true,
     // 下标取值的结果带上 undefined，数组和 Record 取值前必须先判空
     "noUncheckedIndexedAccess": true,

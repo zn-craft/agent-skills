@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 700" width="1400" height="700" role="img" aria-label="发展路线图">
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="700" fill="#ffffff"/>
+  <text x="56" y="58" font-size="25" font-weight="700" fill="#0f172a" text-anchor="start">发展路线图</text>
+  <text x="56" y="86" font-size="13" font-weight="400" fill="#64748b" text-anchor="start">P0 把前端的口径收干净，P1 起沿同一套轴（L0-L4）横向扩到后端、数据与平台。</text>
+  <line x1="176" y1="150" x2="1232" y2="150" stroke="#cbd5e1" stroke-width="3"/>
+  <circle cx="176" cy="150" r="11" fill="#bfdbfe" stroke="#fff" stroke-width="3"/>
+  <rect x="56" y="186" width="240" height="66" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="72" y="213" font-size="15" font-weight="700" fill="#1d4ed8" text-anchor="start">P0  巩固前端</text>
+  <text x="72" y="236" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="start">现在起 2-3 个月</text>
+  <rect x="56" y="272" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="70" y="298" font-size="12" font-weight="400" fill="#334155" text-anchor="start">修掉跨 skill 口径冲突</text>
+  <rect x="56" y="324" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="70" y="350" font-size="12" font-weight="400" fill="#334155" text-anchor="start">vue / svelte 框架层</text>
+  <rect x="56" y="376" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="70" y="402" font-size="12" font-weight="400" fill="#334155" text-anchor="start">testing / accessibility</text>
+  <rect x="56" y="428" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="70" y="454" font-size="12" font-weight="400" fill="#334155" text-anchor="start">README 与 description 校验</text>
+  <rect x="56" y="480" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="70" y="506" font-size="12" font-weight="400" fill="#334155" text-anchor="start">打第一个 release tag</text>
+  <circle cx="440" cy="150" r="11" fill="#ddd6fe" stroke="#fff" stroke-width="3"/>
+  <rect x="320" y="186" width="240" height="66" rx="14" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/>
+  <text x="336" y="213" font-size="15" font-weight="700" fill="#5b21b6" text-anchor="start">P1  Node 服务端</text>
+  <text x="336" y="236" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="start">3 个月</text>
+  <rect x="320" y="272" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="334" y="298" font-size="12" font-weight="400" fill="#334155" text-anchor="start">node-project-baseline</text>
+  <rect x="320" y="324" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="334" y="350" font-size="12" font-weight="400" fill="#334155" text-anchor="start">node-module-structure</text>
+  <rect x="320" y="376" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="334" y="402" font-size="12" font-weight="400" fill="#334155" text-anchor="start">api-design 接口契约</text>
+  <rect x="320" y="428" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="334" y="454" font-size="12" font-weight="400" fill="#334155" text-anchor="start">与前端 skill 共用术语</text>
+  <circle cx="704" cy="150" r="11" fill="#a7f3d0" stroke="#fff" stroke-width="3"/>
+  <rect x="584" y="186" width="240" height="66" rx="14" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5"/>
+  <text x="600" y="213" font-size="15" font-weight="700" fill="#065f46" text-anchor="start">P2  数据与可靠性</text>
+  <text x="600" y="236" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="start">3 个月</text>
+  <rect x="584" y="272" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="598" y="298" font-size="12" font-weight="400" fill="#334155" text-anchor="start">sql-best-practices</text>
+  <rect x="584" y="324" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="598" y="350" font-size="12" font-weight="400" fill="#334155" text-anchor="start">observability</text>
+  <rect x="584" y="376" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="598" y="402" font-size="12" font-weight="400" fill="#334155" text-anchor="start">security</text>
+  <rect x="584" y="428" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="598" y="454" font-size="12" font-weight="400" fill="#334155" text-anchor="start">resilience 幂等与重试</text>
+  <circle cx="968" cy="150" r="11" fill="#fecdd3" stroke="#fff" stroke-width="3"/>
+  <rect x="848" y="186" width="240" height="66" rx="14" fill="#fff1f2" stroke="#fecdd3" stroke-width="1.5"/>
+  <text x="864" y="213" font-size="15" font-weight="700" fill="#9f1239" text-anchor="start">P3  多语言与平台</text>
+  <text x="864" y="236" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="start">6 个月</text>
+  <rect x="848" y="272" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="862" y="298" font-size="12" font-weight="400" fill="#334155" text-anchor="start">python / java / go 三件套</text>
+  <rect x="848" y="324" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="862" y="350" font-size="12" font-weight="400" fill="#334155" text-anchor="start">container-and-deploy</text>
+  <rect x="848" y="376" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="862" y="402" font-size="12" font-weight="400" fill="#334155" text-anchor="start">release-and-versioning</text>
+  <rect x="848" y="428" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="862" y="454" font-size="12" font-weight="400" fill="#334155" text-anchor="start">monorepo 划分</text>
+  <circle cx="1232" cy="150" r="11" fill="#fed7aa" stroke="#fff" stroke-width="3"/>
+  <rect x="1112" y="186" width="240" height="66" rx="14" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+  <text x="1128" y="213" font-size="15" font-weight="700" fill="#9a3412" text-anchor="start">P4  生态化</text>
+  <text x="1128" y="236" font-size="11.5" font-weight="400" fill="#64748b" text-anchor="start">持续</text>
+  <rect x="1112" y="272" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="1126" y="298" font-size="12" font-weight="400" fill="#334155" text-anchor="start">团队规范注入</text>
+  <rect x="1112" y="324" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="1126" y="350" font-size="12" font-weight="400" fill="#334155" text-anchor="start">有无 skill 对照评测</text>
+  <rect x="1112" y="376" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="1126" y="402" font-size="12" font-weight="400" fill="#334155" text-anchor="start">skills/&lt;category&gt;/ 分类</text>
+  <rect x="1112" y="428" width="240" height="42" rx="11" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="1126" y="454" font-size="12" font-weight="400" fill="#334155" text-anchor="start">外部贡献者自助上架</text>
+  <rect x="56" y="566" width="1290" height="104" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="76" y="596" font-size="13.5" font-weight="650" fill="#0f172a" text-anchor="start">每阶段的验收标准</text>
+  <text x="76" y="624" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">新增 skill 评分 ≥ 9.5；同一层 skill 的 description 相似度 &lt; 50%；前端已有 skill 不改一行就能与新 skill 共存；</text>
+  <text x="76" y="646" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">每个新 skill 都带可执行的验收清单，并用「有无 skill 对照」跑一遍再发布。</text>
+</svg>

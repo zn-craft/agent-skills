@@ -14,11 +14,11 @@
 | --- | --- | --- |
 | 1 | `noImplicitAny` | 参数没写类型 |
 | 2 | `strictNullChecks` | 可能为 null 的值没判断 |
-| 3 | `noUncheckedIndexedAccess` | 下标取值可能为空 |
-| 4 | `strict: true` | 以上全含 |
-| 5 | `noUnusedLocals` | 遗留死代码 |
+| 3 | `strict: true` | 前两档加上其余严格检查。`strict` 不含下面两项，别把它当成全部 |
+| 4 | `noUncheckedIndexedAccess` | 下标和 `Record` 取值可能为空 |
+| 5 | `noUnusedLocals`、`noUnusedParameters` | 遗留死代码与用不上的参数 |
 
-新建项目直接从第 4 档开始。存量项目开一档、修完再合并；修不完的遗留目录单独给一份宽松配置，并记下例外的清理条件。
+新建项目按 [config-templates.md](config-templates.md) 的 `tsconfig.json` 一次开到第 5 档。存量项目从第 1 档开起、修完再合并，第 3 档之后再单独评估第 4、5 档的清理成本；修不完的遗留目录单独给一份宽松配置，并记下例外的清理条件。
 
 ## 配置分层
 

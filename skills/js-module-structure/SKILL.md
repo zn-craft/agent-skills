@@ -51,6 +51,13 @@ JS 项目（没有 TS 构建链）里 `xx.type.ts` 换成 `xx.d.ts` 或 JSDoc `@
 - 模块下的子目录（`components/`、`hooks/`、`composables/`、`utils/`）沿用同一套文件分工。
 - 测试文件默认与实现同级；仓库已有 `__tests__/` 约定时沿用仓库的。
 
+## 需要用户拍板时
+
+- 先读项目里的 `skill-memory/js-module-structure.md`，命中就照做、不再问。
+- 只在这类答案会影响整个仓库时问：目录与文件用哪种命名风格、是否给每个模块补 `index.ts`、类型文件放模块内还是公共目录。
+- 问完把结论和一句理由写进该文件，一行一条「结论 —— 一句理由」，不抄对话。
+- 其余按现状定：单个模块叫什么、某个文件放哪、这个模块要不要 `.mock.ts`。
+
 ## 继续读
 
 - React 项目（组件、页面、hooks）：读 [references/react.md](references/react.md)

@@ -9,6 +9,8 @@ Two design goals:
 1. **Install one skill at a time**: users install only the skill they need, without cloning the whole repository.
 2. **Zero runtime dependencies**: skill directories are self-contained and work as soon as they are installed.
 
+See [ROADMAP.en.md](ROADMAP.en.md) for the layered architecture, how the skills work together, and the expansion plan.
+
 ## Repository layout
 
 ```text
@@ -25,6 +27,7 @@ agent-skills/
 │   ├── new-skill.mjs              # Generate a skill skeleton
 │   ├── validate-skills.mjs        # Validate every skill
 │   ├── score-skills.mjs           # Score skills (merge gate, 8.5)
+│   ├── build-roadmap-diagrams.mjs # Generate the ROADMAP figures (Chinese and English)
 │   ├── install-skill.sh           # Install one skill into any agent (macOS / Linux / WSL / Git Bash)
 │   └── install-skill.ps1          # Install one skill into any agent (Windows PowerShell)
 ├── .github/workflows/             # Validation and scoring run automatically on push and PR
@@ -89,7 +92,7 @@ When you add a skill, register it in this table so users can find it. The descri
 | [js-module-structure](skills/js-module-structure) | Module directory, file role, and named-export conventions for non-backend JS/TS projects. Use it when creating a module, writing a utility or component library, adding api / store / hooks / utils / components / pages to a frontend app, adding types, constants, mocks, styles or tests to an existing module, or splitting and reorganizing directories in React, Vue, native mini program, Taro, and uni-app projects. Only when creating or reorganizing JS/TS code, or deciding which file a piece of code belongs in; not for backend services | `npx skills add zn-craft/agent-skills --skill js-module-structure` |
 | [code-comments](skills/code-comments) | What comments should say, when one is required, when to delete it, and what to do with stale ones. Use it when writing or changing code or configuration files, and when tidying up legacy comments. It does not cover lint rules, comment formatting, API doc generation, or commit messages | `npx skills add zn-craft/agent-skills --skill code-comments` |
 | [style-conventions](skills/style-conventions) | How styles should be written: class names and scoping, variables and design tokens, selector specificity, layout and responsive breakpoints, themes and interaction states, inline styles and runtime values, and where global CSS ends, plus how style files and folders are organized. Use it when adding or changing component styles, turning a design into CSS / SCSS / Less, writing CSS Modules, Vue scoped styles, Tailwind, or mini program wxss, and when tracking down styles that override each other or magic values. It does not cover style linter configuration, build output optimization, or visual design review | `npx skills add zn-craft/agent-skills --skill style-conventions` |
-| [javascript-best-practices](skills/javascript-best-practices) | JavaScript language-level style and structure decisions: use when writing, changing, or reviewing JS/TS code. Covers naming, function form (arrow functions by default, with the exceptions), control flow, value handling, async style, error handling, and when to inherit versus compose. Does not cover TypeScript type modeling, module layout, React components, CSS, comments, or build / lint configuration. | `npx skills add zn-craft/agent-skills --skill javascript-best-practices` |
+| [js-best-practices](skills/js-best-practices) | JavaScript language-level style and structure decisions: use when writing, changing, or reviewing JS/TS code. Covers naming, function form (arrow functions by default), control flow and value handling, collections (numbers and dates, strings, cloning), async style, error handling, and the tradeoffs in inheritance, loops, and caching. Does not cover TypeScript type modeling, module layout, framework components, comments, or build / lint configuration. | `npx skills add zn-craft/agent-skills --skill js-best-practices` |
 | [typescript-best-practices](skills/typescript-best-practices) | TypeScript type modeling and writing decisions: use when writing, changing, reviewing, or refactoring TS code. Decides how to declare types (interface / type / unions / enums / `as const`), how to narrow boundary data from `unknown`, how to move away from `any` and assertions, how to express errors and domain concepts in types, and how much strictness to take on. Also covers typing Props, events, refs, and generic components in `.tsx`. Does not cover general JS style, module layout, JSX rendering, tsconfig, or lint configuration. | `npx skills add zn-craft/agent-skills --skill typescript-best-practices` |
 | [react-best-practices](skills/react-best-practices) | Use when writing, changing, or reviewing React components. Covers component boundaries, state ownership, Hooks, Effects, data fetching, rendering, and interaction performance. For SSR or RSC, consult the guidance for the project's version. Excludes build configuration, TypeScript type design, and CSS conventions. | `npx skills add zn-craft/agent-skills --skill react-best-practices` |
 

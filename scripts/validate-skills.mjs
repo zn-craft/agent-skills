@@ -93,6 +93,47 @@ async function collectEntries(dir, prefix = "") {
   return entries;
 }
 
+const REGISTRY_ROW = /^\|\s*\[([^\]|]+)\]\(([^)]+)\)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|\s*$/;
+
+/** 读 README 表格：skill 名 -> 说明列。缺行的 skill 不在 map 里。 */
+async function readRegistry(file) {
+  const text = await readFile(file, "utf8").catch(() => null);
+  const registry = new Map();
+  if (text === null) return registry;
+  for (const line of text.split("\n")) {
+    const match = REGISTRY_ROW.exec(line);
+    if (!match) continue;
+    const name = path.basename(match[2].replace(/\/+$/, ""));
+    registry.set(name, match[3].trim());
+  }
+  return registry;
+}
+
+/**
+ * README 的 skills 表格是使用者查找入口，说明列必须等于 description。
+ * 中英两份都要登记；英文版是译文，只查有没有这一行。
+ */
+async function checkRegistry(declared, results) {
+  const index = new Map(results.map((result, position) => [path.basename(result.dir), position]));
+  const cn = await readRegistry(path.join(REPO_ROOT, "README.md"));
+  const en = await readRegistry(path.join(REPO_ROOT, "README.en.md"));
+
+  for (const [name, description] of declared) {
+    const position = index.get(name);
+    if (position === undefined) continue;
+    const result = results[position];
+    if (!result.dir) continue;
+
+    const listed = cn.get(name);
+    if (listed === undefined) {
+      result.errors.push("README.md 的 skills 表格里没有这一行，使用者查不到");
+    } else if (listed !== description) {
+      result.errors.push("README.md 的说明列与 SKILL.md 的 description 不一致（说明列抄 description）");
+    }
+    if (!en.has(name)) result.warnings.push("README.en.md 的 skills 表格里没有这一行");
+  }
+}
+
 async function validateSkill(dir) {
   const errors = [];
   const warnings = [];
@@ -102,10 +143,11 @@ async function validateSkill(dir) {
   const source = await readFile(path.join(dir, "SKILL.md"), "utf8").catch(() => null);
   if (source === null) {
     errors.push("SKILL.md 无法读取");
-    return { label, errors, warnings };
+    return { label, dir, description: "", errors, warnings };
   }
 
   const parsed = parseFrontmatter(source);
+  let description = "";
   if (parsed.error) {
     errors.push(parsed.error);
   } else {
@@ -121,7 +163,7 @@ async function validateSkill(dir) {
       if (declared !== name) errors.push(`name (${declared}) 与目录名 (${name}) 不一致`);
     }
 
-    const description = fields.description;
+    description = fields.description ?? "";
     if (!description) {
       errors.push("frontmatter 缺少 description");
     } else if (description === ">" || description === "|") {
@@ -162,7 +204,7 @@ async function validateSkill(dir) {
     if (PLACEHOLDER_PATTERN.test(yaml)) warnings.push("agents/openai.yaml 里还有未完成的占位内容");
   }
 
-  return { label, errors, warnings };
+  return { label, dir, description, errors, warnings };
 }
 
 async function main() {
@@ -188,7 +230,13 @@ async function main() {
   }
 
   const results = [];
-  for (const dir of dirs) results.push(await validateSkill(dir));
+  const declared = new Map();
+  for (const dir of dirs) {
+    const result = await validateSkill(dir);
+    results.push(result);
+    if (result.description) declared.set(path.basename(dir), result.description);
+  }
+  await checkRegistry(declared, results);
   const failed = results.filter((result) => result.errors.length).length;
 
   if (json) {
