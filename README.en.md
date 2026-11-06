@@ -31,7 +31,10 @@ agent-skills/
 │   ├── install-skill.sh           # Install one skill into any agent (macOS / Linux / WSL / Git Bash)
 │   └── install-skill.ps1          # Install one skill into any agent (Windows PowerShell)
 ├── .github/workflows/             # Validation and scoring run automatically on push and PR
+├── docs/                          # ROADMAP figures, Chinese and English
 ├── AGENTS.md                      # Repository conventions for AI agents
+├── ROADMAP.md                     # Layered architecture, how skills work together, expansion plan
+├── ROADMAP.en.md                  # Same, in English
 ├── CONTRIBUTING.md                # How to add a skill (Chinese)
 └── CONTRIBUTING.en.md             # How to add a skill
 ```
@@ -118,7 +121,7 @@ node scripts/validate-skills.mjs             # validate every skill under skills
 node scripts/validate-skills.mjs skills/foo  # validate a single skill
 ```
 
-It checks that frontmatter declares `name`/`description`, that `name` matches the directory name, that no placeholder text is left in the body, and that no symlinks or extra documents leaked into a skill directory. GitHub Actions runs the same checks on push and pull requests.
+It checks that frontmatter declares `name`/`description`, that `name` matches the directory name, that no placeholder text is left in the body, that the README description column matches the skill's own `description`, and that no symlinks or extra documents leaked into a skill directory. GitHub Actions runs the same checks on push and pull requests.
 
 Requires Node 18+; there are no other dependencies.
 

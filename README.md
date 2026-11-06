@@ -31,7 +31,10 @@ agent-skills/
 │   ├── install-skill.sh           # 安装单条 skill 到任意 agent（macOS / Linux / WSL / Git Bash）
 │   └── install-skill.ps1          # 安装单条 skill 到任意 agent（Windows PowerShell）
 ├── .github/workflows/             # 提交后自动校验与评分
+├── docs/                          # ROADMAP 的配图，中英各一套
 ├── AGENTS.md                      # 给 AI agent 的仓库约定
+├── ROADMAP.md                     # 分层架构、协作方式与扩展路线
+├── ROADMAP.en.md                  # 同上（英文）
 ├── CONTRIBUTING.md                # 新增 skill 的流程
 └── CONTRIBUTING.en.md             # 新增 skill 的流程（英文）
 ```
@@ -118,7 +121,7 @@ node scripts/validate-skills.mjs             # 校验 skills/ 下全部 skill
 node scripts/validate-skills.mjs skills/foo  # 只校验一个
 ```
 
-校验内容：frontmatter 的 `name`/`description` 是否齐全、`name` 是否与目录名一致、正文是否有未完成的占位内容、是否混入符号链接或附属文档。仓库的 GitHub Actions 会在 push 和 PR 时自动跑同一套校验。
+校验内容：frontmatter 的 `name`/`description` 是否齐全、`name` 是否与目录名一致、正文是否有未完成的占位内容、README 的说明列是否与 `description` 一致、是否混入符号链接或附属文档。仓库的 GitHub Actions 会在 push 和 PR 时自动跑同一套校验。
 
 需要 Node 18+，没有其它依赖。
 
