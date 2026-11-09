@@ -1,6 +1,6 @@
 ---
 name: react-best-practices
-description: React component work: boundaries between components, where state lives, Hooks, Effects, data fetching, rendering and interaction performance. Use when writing, changing or reviewing React components. For SSR or RSC, consult the guidance for the project's version. Does not cover build configuration, TypeScript type design or CSS conventions.
+description: React component work, covering boundaries between components, where state lives, Hooks, Effects, data fetching, rendering and interaction performance. Use when writing, changing or reviewing React components. For SSR or RSC, consult the guidance for the project's version. Does not cover build configuration, TypeScript type design or CSS conventions.
 ---
 
 # React best practices

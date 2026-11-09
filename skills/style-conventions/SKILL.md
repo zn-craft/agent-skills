@@ -1,6 +1,6 @@
 ---
 name: style-conventions
-description: Style conventions that decide how styles are written: class names and scoping, variables and tokens, selector specificity, layout and breakpoints, themes and states, inline styles, global CSS and file organization. Use when changing component styles, writing CSS Modules, Tailwind or mini program wxss, or tracing overriding values. Does not cover style linter config or visual design review.
+description: Style conventions, covering class names and scoping, variables and tokens, selector specificity, layout and breakpoints, themes and states, inline styles, global CSS boundaries and file organization. Use when changing component styles, writing CSS Modules, Tailwind or mini program wxss, or tracing overriding values. Does not cover style linter config or visual design review.
 ---
 
 # Style conventions

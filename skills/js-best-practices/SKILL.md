@@ -1,6 +1,6 @@
 ---
 name: js-best-practices
-description: JavaScript language-level style and structure decisions: use when writing, changing or reviewing JS/TS code. Covers naming, function form, control flow, collections, async style and error handling, plus the tradeoffs in classes, inheritance, loops and caching. Does not cover TypeScript type modeling, module layout, framework components or build and lint config.
+description: JavaScript language-level style and structure decisions. Use when writing, changing or reviewing JS/TS code. Covers naming, function form, control flow, collections, async style and error handling, plus the tradeoffs in classes, inheritance, loops and caching. Does not cover TypeScript type modeling, module layout, framework components or build and lint config.
 ---
 
 # JavaScript best practices

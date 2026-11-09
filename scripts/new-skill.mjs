@@ -31,6 +31,12 @@ const SHORT_DESCRIPTION_PLACEHOLDER = {
   zh: "TODO: 25-64 字符的界面简短描述",
 };
 
+/** 值里有 YAML 的敏感字符就加双引号，否则生成出来的 frontmatter 会解析失败。 */
+function yamlScalar(value) {
+  const needsQuote = /:\s|\s#|^(?:-|\?|:)\s|^[#[\]{}&*!|>'"%@`]/.test(value);
+  return needsQuote ? `"${value.replace(/"/g, '\\"')}"` : value;
+}
+
 function usage() {
   console.log(`用法：node scripts/new-skill.mjs <skill-name> [options]
 
@@ -151,8 +157,8 @@ async function main() {
     const replacements = {
       "{{skill-name}}": options.skill,
       "{{display-name}}": options.skill,
-      "{{description}}": options.description || DESCRIPTION_PLACEHOLDER[lang],
-      "{{short-description}}": options.shortDescription || SHORT_DESCRIPTION_PLACEHOLDER[lang],
+      "{{description}}": yamlScalar(options.description || DESCRIPTION_PLACEHOLDER[lang]),
+      "{{short-description}}": yamlScalar(options.shortDescription || SHORT_DESCRIPTION_PLACEHOLDER[lang]),
     };
     for (const child of await readdir(langDest)) {
       await substitute(path.join(langDest, child), replacements);

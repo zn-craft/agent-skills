@@ -34,6 +34,20 @@ function reportPath(target) {
   return relative && !relative.startsWith("..") ? toPosix(relative) : target;
 }
 
+/**
+ * 未加引号的 YAML 纯文本值里出现这些字符，解析器会当成结构而不是文本：
+ * `: ` 变成嵌套映射、` #` 变成注释、指示符开头另有含义。
+ * 踩中任何一条，安装器读 frontmatter 时会直接跳过整个 skill。
+ */
+function plainScalarProblem(text) {
+  if (text.startsWith("{{")) return null; // 模板占位符，生成时会被替换掉
+  if (/:\s/.test(text)) return "含 ': '";
+  if (/\s#/.test(text)) return "含 ' #'";
+  if (/^[#[\]{}&*!|>'"%@`]/.test(text)) return "以 YAML 指示符开头";
+  if (/^(?:-|\?|:)\s/.test(text)) return "以 YAML 指示符开头";
+  return null;
+}
+
 function parseFrontmatter(text) {
   const normalized = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
   if (!normalized.startsWith("---\n")) {
@@ -44,19 +58,19 @@ function parseFrontmatter(text) {
     return { error: "frontmatter 没有用 '---' 正常闭合" };
   }
   const fields = {};
+  const unquoted = {};
   for (const line of normalized.slice(4, end + 1).split("\n")) {
     if (!line.trim() || /^\s/.test(line)) continue;
     const match = /^([A-Za-z0-9_.-]+):\s*(.*)$/.exec(line);
     if (!match) continue;
-    let value = match[2].trim();
+    const raw = match[2].trim();
     const quoted =
-      value.length > 1 &&
-      ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'")));
-    if (quoted) value = value.slice(1, -1);
-    fields[match[1]] = value;
+      raw.length > 1 &&
+      ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'")));
+    fields[match[1]] = quoted ? raw.slice(1, -1) : raw;
+    if (!quoted) unquoted[match[1]] = raw;
   }
-  return { fields, body: normalized.slice(end + 4) };
+  return { fields, unquoted, body: normalized.slice(end + 4) };
 }
 
 async function collectEntries(dir, prefix = "") {
@@ -168,6 +182,13 @@ async function validateVariant(variant) {
     errors.push(parsed.error);
   } else {
     const { fields, body } = parsed;
+    for (const [key, raw] of Object.entries(parsed.unquoted ?? {})) {
+      const problem = plainScalarProblem(raw);
+      if (!problem) continue;
+      errors.push(
+        `frontmatter 的 ${key} 是未加引号的 YAML 纯文本，${problem}，解析器会报错并跳过这个 skill；改掉这个字符，或用双引号把整段括起来`,
+      );
+    }
     const declared = fields.name;
     if (!declared) {
       errors.push("frontmatter 缺少 name");
