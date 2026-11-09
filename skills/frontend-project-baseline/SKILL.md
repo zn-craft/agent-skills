@@ -1,6 +1,6 @@
 ---
 name: frontend-project-baseline
-description: Engineering baseline for a frontend project: package manager, TypeScript, formatting, static analysis, env templates, commit gates and CI. Use when setting up a new project, retrofitting lint / format / type check / git hooks / CI into an existing one, or reviewing the setup against the baseline. Works for single packages and monorepos. Does not cover business layout or release versioning.
+description: Engineering baseline for a frontend project, covering the package manager, TypeScript, ESLint, Prettier, tsconfig, stylelint, husky and CI. Use when setting up a project or retrofitting lint, format, type check, git hooks or CI into an existing one. Framework agnostic; works for single packages and monorepos. Does not cover business layout or release versioning.
 ---
 
 # Frontend project baseline

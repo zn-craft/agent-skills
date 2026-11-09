@@ -1,6 +1,6 @@
 ---
 name: typescript-best-practices
-description: TypeScript type modeling: use when writing, changing, reviewing or refactoring TS code. Covers declaring types, narrowing boundary data from unknown, retiring any and assertions, expressing errors and domain concepts in types, choosing strictness, and typing Props / events / refs and generic components in .tsx. Does not cover JS style, module layout, JSX rendering, tsconfig or lint config.
+description: TypeScript type modeling. Use when writing, changing, reviewing or refactoring TS code. Covers declaring types, narrowing boundary data from unknown, retiring any and assertions, expressing errors and domain concepts in types, choosing strictness, and typing Props / events / refs and generic components in .tsx. Does not cover JS style, module layout, JSX rendering, tsconfig or lint config.
 ---
 
 # TypeScript best practices
