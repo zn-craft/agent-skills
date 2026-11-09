@@ -1,84 +1,84 @@
 ---
 name: frontend-project-baseline
-description: 给前端项目建立、补齐或修改工程化基线：包管理器与运行时约束、TypeScript、格式化与静态检查、环境变量模板、提交门禁、CI 必过项。新建项目定技术约束、存量项目接入 lint / 格式化 / 类型检查 / git hooks / CI、评审工程化是否达标，以及改动 ESLint、Prettier、tsconfig、stylelint、husky、CI 等工程化配置时使用。与框架无关，单包与 monorepo 都适用；附配置探测脚本与可复制模板。不负责业务目录与模块职责划分，也不覆盖构建产物优化、版本发布和 monorepo 划分。
+description: Engineering baseline for a frontend project: package manager, TypeScript, formatting, static analysis, env templates, commit gates and CI. Use when setting up a new project, retrofitting lint / format / type check / git hooks / CI into an existing one, or reviewing the setup against the baseline. Works for single packages and monorepos. Does not cover business layout or release versioning.
 ---
 
-# 前端工程化基线
+# Frontend project baseline
 
-基线指：任何人克隆下来，装一次依赖就能跑起来，提交前自动发现问题，CI 拦住漏网的那些。判据只有一条：换个人、换台机器，结果是否一致。
+The baseline means: anyone clones the project, installs dependencies once, and it runs; problems surface before a commit; CI catches whatever slips past. One test decides everything: would another person on another machine get the same result?
 
-## 基线七件事
+## The seven baseline items
 
-| # | 事项 | 落到哪里 | 达标标志 |
+| # | Item | Where it lands | What passing looks like |
 | --- | --- | --- | --- |
-| 1 | 运行时与包管理器约束 | `engines`、`packageManager`、锁文件、`.nvmrc` | 换机器装出的依赖树一致 |
-| 2 | TypeScript | `tsconfig.json` 及分层配置 | 类型检查是一条独立命令，CI 必过 |
-| 3 | 格式化 | 工具配置与忽略文件 | 不再讨论缩进、引号、换行 |
-| 4 | 静态检查 | lint 与样式检查配置，规则分 error 与 warn | 只有 error 拦合并 |
-| 5 | 环境变量 | `.env.example`、变量类型声明 | 新克隆的人能看出要配什么 |
-| 6 | 提交门禁 | git hooks 配置 | 本地只拦改动文件，全量留给 CI |
-| 7 | CI | 流水线配置 | 和本地跑同一套命令 |
+| 1 | Runtime and package manager constraints | `engines`, `packageManager`, lock file, `.nvmrc` | Another machine installs the same dependency tree |
+| 2 | TypeScript | `tsconfig.json` and its layered configs | Type checking is its own command and CI requires it |
+| 3 | Formatting | Tool config and ignore files | Indentation, quotes and line breaks stop being a discussion |
+| 4 | Static analysis | Lint and style config, with rules split into error and warn | Only errors block a merge |
+| 5 | Environment variables | `.env.example`, variable type declarations | A fresh clone can see what has to be configured |
+| 6 | Commit gates | git hooks configuration | Locally it blocks only changed files; the full run stays in CI |
+| 7 | CI | Pipeline configuration | It runs the same commands as the local ones |
 
-上表是清单，接入顺序由三条硬约束决定：包管理器与 Node 排最前，命令写法和 CI 缓存键都由它决定；类型检查排在 lint 之前，类型感知规则要能跑通才开，否则一开就是几百条报错；全量格式化排在 lint 之前，顺序反了两者互相打架。存量项目按同一套约束拆成逐步合并的 PR，见 [references/existing-project.md](references/existing-project.md)。
+That table is the checklist, and the order comes from three hard constraints: the package manager and Node come first because they decide command spelling and CI cache keys; type checking comes before lint so type-aware rules can actually run, since switching them on first produces hundreds of errors; and the full formatting pass comes before lint, because the other order has the two fighting each other. An existing project follows the same constraints, split into PRs that merge one step at a time, as described in [references/existing-project.md](references/existing-project.md).
 
-## 配置约定
+## Configuration rules
 
-- **配置项必须带注释**：每个写进项目的配置项都要说明它管什么、为什么这么设。格式支持注释的就近写（`.mjs`、`tsconfig.json`、`.yml`、忽略文件）；`package.json` 这类严格 JSON 写不了注释，说明放进提交信息或项目文档，不要让后人靠猜。触发本 skill 去改存量项目的工程化配置时，动过的配置项同样补注释。
-- **模板可能落后于最新规范**：`assets/` 记录的是写模板当时的写法，工具主版本一升就可能过时。落地前按该工具当前版本的官方配置格式核对，按新写法写；模板与官方写法冲突时以官方为准，并把差异写进注释。
+- **Every configured option carries a comment**: each option written into the project states what it controls and why it is set that way. Formats that support comments get them next to the value (`.mjs`, `tsconfig.json`, `.yml`, ignore files); a strict JSON file such as `package.json` cannot take one, so the explanation goes into the commit message or the project documentation rather than leaving the next person to guess. When this skill edits the engineering config of an existing project, the options it touches get comments too.
+- **Templates can lag behind the current spec**: `assets/` records how things were written when the template was created, and a major tool release can make it stale. Before landing, check the tool's current official configuration format and write that; where the template and the official form disagree, the official form wins, with the difference noted in a comment.
 
-## 工作方式
+## How it works
 
-先探测、再补缺，**已有的选择一律沿用**。把 husky 换成 lefthook、ESLint 换成 Biome 属于单独的迁移决策，不要夹在补齐基线里做；确实要换时单独提出来让用户拍板，答案写进 `skill-memory/frontend-project-baseline.md`，下次照做、不再问。团队已有明确且冲突的规范时沿用团队的。
+Detect first, then fill the gaps, and **keep every choice already in place**. Replacing husky with lefthook or ESLint with Biome is a separate migration decision, not something to fold into completing the baseline; when it genuinely should change, raise it on its own for the user to decide, and record the answer in `skill-memory/frontend-project-baseline.md` so the next run follows it without asking again. A team convention that is explicit and conflicting wins.
 
-改配置分两条路径，成本差很远，按改动范围选。
+Changing config takes two paths with very different cost, chosen by how much is changing.
 
-- **单点改动**：调一个已有规则的级别、加一条忽略、改一个字段的值。读完本节直接改，不跑脚本，不读 references。动过的配置项补注释即可。
-- **整体改动**：接入基线、评审是否达标、新建项目、换包管理器。先跑下面的脚本，再按报告里的缺口加载对应 reference。
+- **A single-point change**: adjusting the level of one existing rule, adding an ignore, changing one field's value. Read this section, make the change, and skip both the script and the references; the options touched get comments.
+- **A whole-project change**: adopting the baseline, reviewing whether it holds, starting a new project, switching package manager. Run the script below first, then load the reference matching each gap in its report.
 
 ```bash
-node <skill 目录>/scripts/detect-stack.mjs <项目根目录>
+node <skill directory>/scripts/detect-stack.mjs <project root>
 ```
 
-脚本默认输出文本报告；`--json` 只在需要程序化处理时加，输出体积约为文本模式的三倍。
+The script prints a text report by default; `--json` is for programmatic use only, and its output is roughly three times the size.
 
-接完后反向验证一次：删掉 `node_modules` 重装，再故意提交一个类型错误和一个格式错误，确认本地钩子和 CI 都能拦住。
+After adopting it, verify in reverse: delete `node_modules`, reinstall, then deliberately commit one type error and one formatting error and confirm the local hooks and CI stop both.
 
-新建项目按下面的默认值一次到位，模板见 [references/config-templates.md](references/config-templates.md)；存量项目增量接入见 [references/existing-project.md](references/existing-project.md)。
+A new project takes the defaults below in one pass, with templates in [references/config-templates.md](references/config-templates.md); an existing project adopts them incrementally per [references/existing-project.md](references/existing-project.md).
 
-## 默认选型
+## Default choices
 
-| 事项 | 默认 | 什么时候换 |
+| Item | Default | When to change it |
 | --- | --- | --- |
-| 包管理器 | `pnpm` | 仓库已有别的锁文件，沿用它 |
-| Node 版本 | `engines` 限主版本 + `.nvmrc` 写具体版本 | 要复现线上构建时，`engines` 收成主版本区间 |
-| TypeScript | `strict: true` | 存量项目开不动，按 [type-check.md](references/type-check.md) 分档收紧 |
-| 格式化 + 静态检查 | Prettier + ESLint（flat config） | 想用一个工具同时管两者，换 Biome |
-| 样式检查 | stylelint + `stylelint-config-standard` | 仓库里没有 CSS / SCSS / Less，跳过 |
-| 提交门禁 | husky + lint-staged | 仓库已有 lefthook / simple-git-hooks，沿用它 |
-| 提交信息 | Conventional Commits + commitlint | 不生成 changelog 时，只约束类型前缀 |
-| CI | GitHub Actions | 已有 GitLab CI / Jenkins 等平台，沿用 |
+| Package manager | `pnpm` | The repository has another lock file, so keep it |
+| Node version | `engines` pins the major, `.nvmrc` names the exact version | When a production build has to be reproduced, tighten `engines` to a patch range |
+| TypeScript | `strict: true` | An existing project cannot take it, so tighten in steps per [type-check.md](references/type-check.md) |
+| Formatting and static analysis | Prettier plus ESLint (flat config) | Wanting one tool for both means Biome |
+| Style checking | stylelint with `stylelint-config-standard` | The repository has no CSS, SCSS or Less, so skip it |
+| Commit gates | husky with lint-staged | The repository already uses lefthook or simple-git-hooks, so keep it |
+| Commit messages | Conventional Commits with commitlint | Without a changelog, constrain the type prefix only |
+| CI | GitHub Actions | An existing GitLab CI or Jenkins platform stays |
 
-## 不要做的事
+## What not to do
 
-- 两套格式化工具并存，或让 lint 和格式化管同一件事
-- 一次把大量 warning 升成 error，结果人人绕过
-- 在 pre-commit 跑全量测试、全量 lint、全量构建
-- CI 跑和本地不同的命令
-- 格式化重排和逻辑改动放进同一个提交
+- Two formatters side by side, or lint and the formatter governing the same thing
+- Turning a large batch of warnings into errors at once, until everyone works around them
+- Running the full test suite, the full lint or the full build from pre-commit
+- CI running commands that differ from the local ones
+- A formatting reformat and a logic change landing in the same commit
 
-## 资源
+## Resources
 
-- 探测现有配置：`node <skill 目录>/scripts/detect-stack.mjs <项目根目录>`，加 `--json` 输出机器可读结果；单包与 monorepo 都能探测，脚本可整体放到任意位置，入口依赖同目录的 `detect-stack.*.mjs`。
-- 单包项目整套模板：`assets/baseline/`，复制到项目根，含隐藏文件。
-- monorepo 追加模板：`assets/monorepo/`，在单包模板之上覆盖两个文件。
-- 包管理器与 Node 版本约束：[references/package-manager.md](references/package-manager.md)
-- 格式化与静态检查选型：[references/lint-format.md](references/lint-format.md)
-- 配置模板、字段与改造点：[references/config-templates.md](references/config-templates.md)
-- 依赖安装与框架适配：[references/dependencies.md](references/dependencies.md)
-- 环境变量与前缀：[references/env.md](references/env.md)
-- TypeScript 严格度分档：[references/type-check.md](references/type-check.md)
-- 提交门禁与 hooks：[references/git-hooks.md](references/git-hooks.md)
-- CI 流水线结构：[references/ci.md](references/ci.md)
-- 存量项目增量接入：[references/existing-project.md](references/existing-project.md)
+- Inspect the existing config: `node <skill directory>/scripts/detect-stack.mjs <project root>`, adding `--json` for machine-readable output; it handles single packages and monorepos, the scripts can be copied anywhere as a set, and the entry depends on the `detect-stack.*.mjs` files beside it.
+- The full template for a single package: `assets/baseline/`, copied to the project root including the hidden files.
+- Additions for a monorepo: `assets/monorepo/`, overriding two files on top of the baseline.
+- Package manager and Node constraints: [references/package-manager.md](references/package-manager.md)
+- Choosing formatting and static analysis: [references/lint-format.md](references/lint-format.md)
+- Config templates, fields and what to adapt: [references/config-templates.md](references/config-templates.md)
+- Installing dependencies and adapting a framework: [references/dependencies.md](references/dependencies.md)
+- Environment variables and prefixes: [references/env.md](references/env.md)
+- TypeScript strictness in steps: [references/type-check.md](references/type-check.md)
+- Commit gates and hooks: [references/git-hooks.md](references/git-hooks.md)
+- CI pipeline structure: [references/ci.md](references/ci.md)
+- Incremental adoption for an existing project: [references/existing-project.md](references/existing-project.md)
 
-references 按场景加载，不要一次全读。
+Load the references by scenario rather than reading them all at once.

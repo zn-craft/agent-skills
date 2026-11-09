@@ -13,9 +13,9 @@ import {
   FORBIDDEN_TOP_LEVEL,
   MARKDOWN_LINK_PATTERN,
   NAME_PATTERN,
-  PROSE_MAX_BYTES,
-  REFERENCE_MAX_BYTES,
-  SKILL_MD_MAX_BYTES,
+  PROSE_MAX_TOKENS,
+  REFERENCE_MAX_TOKENS,
+  SKILL_MD_MAX_TOKENS,
   TEMPLATE_PATTERN,
   TODO_PATTERN,
   WHEN_PATTERN,
@@ -130,13 +130,13 @@ export function checkDescription(ctx, deductions) {
 }
 
 export function checkDisclosure(ctx, deductions) {
-  if (ctx.skillBytes > SKILL_MD_MAX_BYTES) {
-    const over = Math.ceil((ctx.skillBytes - SKILL_MD_MAX_BYTES) / 2048);
-    addDeduction(deductions, Math.min(0.8, 0.3 * over), "SKILL.md 超预算，该往 references/ 搬", `SKILL.md — ${(ctx.skillBytes / 1024).toFixed(1)} KB`);
+  if (ctx.skillTokens > SKILL_MD_MAX_TOKENS) {
+    const over = Math.ceil((ctx.skillTokens - SKILL_MD_MAX_TOKENS) / 800);
+    addDeduction(deductions, Math.min(0.8, 0.3 * over), "SKILL.md 超预算，该往 references/ 搬", `SKILL.md — ${ctx.skillTokens} token / ${SKILL_MD_MAX_TOKENS} token`);
   }
 
-  if (ctx.references.length && ctx.skillBytes > ctx.referenceBytes) {
-    addDeduction(deductions, 0.4, "正文比 references/ 还重，渐进披露反了", `SKILL.md ${(ctx.skillBytes / 1024).toFixed(1)} KB vs references ${(ctx.referenceBytes / 1024).toFixed(1)} KB`);
+  if (ctx.references.length && ctx.skillTokens > ctx.referenceTokens) {
+    addDeduction(deductions, 0.4, "正文比 references/ 还重，渐进披露反了", `SKILL.md ${ctx.skillTokens} token vs references ${ctx.referenceTokens} token`);
   }
 
   const linked = new Set();
@@ -172,9 +172,8 @@ export function checkDisclosure(ctx, deductions) {
     if (!linked.has(linkedName)) {
       addDeduction(deductions, 0.3, "reference 没有被正文引用", `${ctx.label}/${linkedName}`, "orphan", 0.9);
     }
-    if (reference.bytes > REFERENCE_MAX_BYTES) {
-      const size = `${(reference.bytes / 1024).toFixed(1)} KB`;
-      addDeduction(deductions, 0.2, "单份 reference 过重，该拆", `${ctx.label}/${linkedName} — ${size}`, "ref-size", 0.4);
+      if (reference.tokens > REFERENCE_MAX_TOKENS) {
+        addDeduction(deductions, 0.2, "单份 reference 过重，该拆", `${ctx.label}/${linkedName} — ${reference.tokens} token / ${REFERENCE_MAX_TOKENS} token`, "ref-size", 0.4);
     }
   }
 }
@@ -197,9 +196,9 @@ export function checkActionable(ctx, deductions) {
 }
 
 export function checkConcise(ctx, deductions) {
-  if (ctx.proseBytes > PROSE_MAX_BYTES) {
-    const over = Math.ceil((ctx.proseBytes - PROSE_MAX_BYTES) / 10240);
-    addDeduction(deductions, Math.min(0.6, 0.3 * over), "正文总量超预算，先删再加", `${(ctx.proseBytes / 1024).toFixed(1)} KB / ${PROSE_MAX_BYTES / 1024} KB`);
+  if (ctx.proseTokens > PROSE_MAX_TOKENS) {
+    const over = Math.ceil((ctx.proseTokens - PROSE_MAX_TOKENS) / 3000);
+    addDeduction(deductions, Math.min(0.6, 0.3 * over), "正文总量超预算，先删再加", `${ctx.proseTokens} token / ${PROSE_MAX_TOKENS} token`);
   }
 
   for (const group of ctx.duplicates.crossFile) {
@@ -220,10 +219,17 @@ export function checkConcise(ctx, deductions) {
 }
 
 export function checkPortable(ctx, deductions) {
-  const others = ctx.otherSkillNames.filter((name) => name !== ctx.name);
+  // 只有当成完整词提到才算互相依赖：`react-best-practices` 出现在 `react-best-practices-zh`
+  // 里属于语言变体的目录名，不是引用。
+  const others = ctx.otherSkillNames
+    .filter((name) => name !== ctx.name)
+    .map((name) => ({
+      name,
+      pattern: new RegExp(`(?<![a-z0-9-])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9-])`, "i"),
+    }));
   for (const file of ctx.textFiles) {
-    for (const name of others) {
-      if (!file.text.includes(name)) continue;
+    for (const { name, pattern } of others) {
+      if (!pattern.test(file.text)) continue;
       addDeduction(deductions, 0.5, `提到了别的 skill（${name}），skill 之间不要互相依赖`, `${ctx.label}/${file.relative}`, "cross-skill", 0.5);
     }
   }

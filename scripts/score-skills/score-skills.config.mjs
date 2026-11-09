@@ -10,14 +10,17 @@ const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 export const SCRIPT_DIR = path.resolve(MODULE_DIR, "..");
 export const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
-export const SKILLS_DIR = path.join(REPO_ROOT, "skills");
 
 export const DEFAULT_MIN = 8.5;
 
-// 体量预算：SKILL.md 超了要往 references/ 搬，单份 reference 超了要拆，正文总量超了要删。
-export const SKILL_MD_MAX_BYTES = 8 * 1024;
-export const REFERENCE_MAX_BYTES = 8 * 1024;
-export const PROSE_MAX_BYTES = 40 * 1024;
+// 体量预算按 token 算。字节对中英不等价：一个汉字 3 字节，英文一个词才几个字节，
+// 同一份内容换语言字节能差三成，拿同一个字节上限卡会误伤英文版。
+// token 才是真实的上下文成本。取值依据：现有 14 个语言版本里 SKILL.md 最大约 1.9k、
+// 单份 reference 最大约 1.8k、正文总量最大约 10k token，各留两成余量。
+// SKILL.md 超了要往 references/ 搬，单份 reference 超了要拆，正文总量超了要删。
+export const SKILL_MD_MAX_TOKENS = 2500;
+export const REFERENCE_MAX_TOKENS = 2500;
+export const PROSE_MAX_TOKENS = 12000;
 export const PARAGRAPH_MAX_CHARS = 320;
 
 export const NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -32,7 +35,7 @@ export const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\(([^)\s]+)\)/g;
 
 export const WHEN_PATTERN = /使用|用于|适用|用来|时读|触发|when\b|use (?:it|this) when/iu;
 export const WHAT_PATTERN =
-  /规定|生成|建立|创建|检查|整理|分析|转换|评估|校验|搭建|补齐|计算|排查|迁移|判断|梳理|拆分|评审|导出|写|给|把|按/u;
+  /规定|生成|建立|创建|检查|整理|分析|转换|评估|校验|搭建|补齐|计算|排查|迁移|判断|梳理|拆分|评审|导出|写|给|把|按|\b(?:define|decide|write|establish|create|check|review|refactor|organize|split|build|generate|validate|evaluate|migrate|structure|document|enforce|set|apply|cover|describe|turn)\w*/iu;
 export const BOUNDARY_PATTERN = /不负责|不管|不适用|不覆盖|不处理|不涉及|不包含|只在|does not|not for/iu;
 export const CONSTRAINT_PATTERN = /必须|不要|不能|一律|禁止|只能|绝不|不许|唯一的|\bmust\b|\bnever\b|\bdo not\b/iu;
 

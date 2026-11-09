@@ -1,39 +1,39 @@
-# 存量项目增量接入
+# Incremental adoption for an existing project
 
-难点在改动范围的控制上。一次性全量重排会淹没 `git blame`，也会让正在开发的同事全部冲突。三条原则：先探测现状、每步独立合并、新规则先管新代码。
+The hard part is controlling the blast radius. One huge reformat buries `git blame` and puts every colleague with an open branch into conflict. Three principles: detect the current state first, merge each step on its own, and let a new rule govern new code first.
 
-## 顺序
+## Order
 
-每一步是一个可单独合并、可单独回滚的 PR。
+Each step is a pull request that merges and rolls back on its own.
 
-| 步骤 | 动作 | 完成标志 |
+| Step | Action | Done when |
 | --- | --- | --- |
-| 1 | 补 `engines`、`.nvmrc`、`packageManager`，统一锁文件 | 换机器装依赖结果一致 |
-| 2 | 接格式化工具，有样式文件时同时接 stylelint，先只配不改代码 | `format:check`、`stylelint` 能跑 |
-| 3 | 全量格式化，单独一个提交 | 工作区干净，无逻辑改动 |
-| 4 | 接 `typecheck`，按 [type-check.md](type-check.md) 选一档开启 | `typecheck` 跑通 |
-| 5 | 接 lint，先只开少量 error | lint 跑通，error 为零 |
-| 6 | 加提交门禁，只对改动文件生效 | 改个文件提交能看到自动修复 |
-| 7 | 加 CI，跑上面全部命令并设为合并必需 | 流水线绿灯 |
+| 1 | Add `engines`, `.nvmrc` and `packageManager`, and settle on one lock file | Another machine installs the same dependencies |
+| 2 | Adopt the formatter, plus stylelint when there are style files, with configuration only and no code changes | `format:check` and `stylelint` run |
+| 3 | Run the full formatting pass as a commit of its own | The working tree is clean, with no logic change |
+| 4 | Adopt `typecheck` at one step per [type-check.md](type-check.md) | `typecheck` passes |
+| 5 | Adopt lint with only a few errors enabled first | lint passes with no errors |
+| 6 | Add the commit gates, applying to changed files only | Changing a file and committing shows the autofix running |
+| 7 | Add CI running every command above, made required for merging | The pipeline is green |
 
-顺序和 SKILL.md 的三条硬约束一致，不能跳：全量格式化排在第 2 步之后、lint 之前，格式化和 lint 才不打架；类型检查排在 lint 之前，类型感知规则才不会一开就爆；4、5 步都排在 6 步之前，钩子才不会一装就红。每一步动过的配置项都要补注释，写清它管什么、为什么这么设。
+The order matches the three hard constraints in SKILL.md and cannot be skipped: the full formatting pass follows step 2 and precedes lint, so the two do not fight; type checking precedes lint, so type-aware rules do not explode on day one; and steps 4 and 5 both precede step 6, so a freshly installed hook is not red immediately. Every option touched along the way gets a comment stating what it controls and why it is set that way.
 
-## 全量格式化的做法
+## Running the full formatting pass
 
-1. 只跑格式化命令，不夹逻辑改动。提交信息例如 `chore: apply prettier to entire repo`。
-2. 把这个提交的哈希写进 `.git-blame-ignore-revs`，让 `git blame` 跳过它。
-3. 告知团队：正在开发的分支 rebase 时按需处理冲突。
+1. Run the formatting command alone, with no logic change mixed in. A commit message such as `chore: apply prettier to entire repo` says so.
+2. Put that commit's hash into `.git-blame-ignore-revs`, so `git blame` skips it.
+3. Tell the team that branches in flight handle conflicts as they rebase.
 
-## 规则逐步收紧
+## Tightening the rules over time
 
-- 先只开确定有价值的 error 规则，其余 warn。
-- 记录当前 warning 数量，之后每轮清理一批，只降不升。
-- 遗留目录用 overrides 给宽松配置，并注明例外原因和清理条件。
+- Enable only the error rules that are clearly worthwhile at first, leaving the rest as warnings.
+- Record the current warning count and clear a batch each round, so it only ever falls.
+- A legacy directory gets a looser config through overrides, with the reason for the exception and its cleanup condition written down.
 
-## 先不要动的情况
+## When to leave it alone
 
-- 项目即将下线或被替换：只补锁文件和 Node 版本。
-- 正处发布冻结期或大重构中：等重构落地再接。
-- 没人愿意维护这套配置：先确认维护人，规则开着没人管比没规则更糟。
+- A project about to be retired or replaced: add only the lock file and the Node version.
+- A release freeze or a large refactor in progress: wait until the refactor lands.
+- Nobody willing to maintain the configuration: find the maintainer first, since rules nobody tends are worse than no rules.
 
-接入完成后把这几件事写进 `CONTRIBUTING` 或 README：包管理器与 Node 要求、提交前跑什么、怎么绕过、提交信息格式、已知例外。
+Once adoption finishes, record these in `CONTRIBUTING` or the README: the package manager and Node requirements, what runs before a commit, how to bypass it, the commit message format, and the known exceptions.

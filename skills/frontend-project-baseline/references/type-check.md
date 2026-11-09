@@ -1,40 +1,40 @@
-# TypeScript 与严格度
+# TypeScript and strictness
 
-目标：类型检查是一条独立命令，且在 CI 里必过。多数构建链只做语法剥离，不做类型检查。
+The goal: type checking is its own command and CI requires it. Most build chains only strip syntax and never type check.
 
 ```json
 { "scripts": { "typecheck": "tsc --noEmit" } }
 ```
 
-框架项目换成对应检查器（`vue-tsc`、`svelte-check`），多包项目用 `tsc -b`，命令名统一叫 `typecheck`。
+A framework project swaps in its own checker (`vue-tsc`, `svelte-check`), a multi-package project uses `tsc -b`, and the command is named `typecheck` throughout.
 
-## 分档推进
+## Tightening in steps
 
-| 档 | 开关 | 拦下的问题 |
+| Step | Switch | What it catches |
 | --- | --- | --- |
-| 1 | `noImplicitAny` | 参数没写类型 |
-| 2 | `strictNullChecks` | 可能为 null 的值没判断 |
-| 3 | `strict: true` | 前两档加上其余严格检查。`strict` 不含下面两项，别把它当成全部 |
-| 4 | `noUncheckedIndexedAccess` | 下标和 `Record` 取值可能为空 |
-| 5 | `noUnusedLocals`、`noUnusedParameters` | 遗留死代码与用不上的参数 |
+| 1 | `noImplicitAny` | Parameters with no type |
+| 2 | `strictNullChecks` | Values that may be null and are not checked |
+| 3 | `strict: true` | The first two plus the remaining strict checks. `strict` does not include the two below, so do not mistake it for everything |
+| 4 | `noUncheckedIndexedAccess` | Index access and `Record` lookups that may be empty |
+| 5 | `noUnusedLocals`, `noUnusedParameters` | Dead code left behind and unused parameters |
 
-新建项目按 [config-templates.md](config-templates.md) 的 `tsconfig.json` 一次开到第 5 档。存量项目从第 1 档开起、修完再合并，第 3 档之后再单独评估第 4、5 档的清理成本；修不完的遗留目录单独给一份宽松配置，并记下例外的清理条件。
+A new project turns on all five at once through the `tsconfig.json` in [config-templates.md](config-templates.md). An existing project starts at step 1, merges once it is clean, and evaluates the cleanup cost of steps 4 and 5 separately after step 3; a legacy directory that cannot be finished gets its own looser config with the cleanup condition recorded.
 
-## 配置分层
+## Layering the config
 
-- `tsconfig.json`：应用主配置。
-- `tsconfig.node.json`：构建脚本与工具配置，环境不同。
-- `tsconfig.test.json`：测试环境，加测试框架类型。
+- `tsconfig.json`: the application's main config.
+- `tsconfig.node.json`: build scripts and tooling config, a different environment.
+- `tsconfig.test.json`: the test environment, with the test framework's types.
 
-公共部分抽成 `tsconfig.base.json` 用 `extends` 组合。不要把所有 `include` 塞进一个文件，否则编辑器会把产物目录当源码扫。只声明类型不产出的项目用 `noEmit`；要发 d.ts 的库开 `declaration` 并写进 `exports`。
+The shared part is extracted into `tsconfig.base.json` and composed with `extends`. Do not pile every `include` into one file, or the editor scans build output as source. A project that only declares types uses `noEmit`; a library that ships `.d.ts` files turns on `declaration` and lists it in `exports`.
 
-## 松绑的写法
+## Loosening it
 
-| 写法 | 是否接受 |
+| Form | Accepted |
 | --- | --- |
-| `// @ts-expect-error` + 原因 | 接受，错误消失时会自己报错提醒删除 |
-| `// @ts-ignore` | 只在生成代码或第三方补丁里 |
-| `as any` | 不接受，改成 `unknown` 加类型收窄 |
-| 整段 `@ts-nocheck` | 只允许在遗留迁移清单里，并记录清理条件 |
+| `// @ts-expect-error` with a reason | Yes, and it reports itself once the error is fixed, which is the reminder to delete it |
+| `// @ts-ignore` | Only in generated code or a third-party patch |
+| `as any` | No, use `unknown` and narrow |
+| A whole-file `@ts-nocheck` | Only for entries on a migration list, with the cleanup condition recorded |
 
-类型检查和 lint 并行跑，互不依赖。唯一权威是 CI。
+Type checking and lint run in parallel and do not depend on each other. CI is the only authority.

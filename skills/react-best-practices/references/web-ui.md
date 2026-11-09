@@ -1,29 +1,29 @@
-# 浏览器端 Web UI
+# Browser-side web UI
 
-**适用范围：** 浏览器 DOM、交互和可访问性。SSR 环境额外读取 [ssr-and-hydration.md](ssr-and-hydration.md)。
+**Scope:** browser DOM, interaction and accessibility. An SSR environment also reads [ssr-and-hydration.md](ssr-and-hydration.md).
 
-## JSX 与 DOM
+## JSX and the DOM
 
-- 没有子节点的组件用自闭合写法，如 `<Icon />`。多个兄弟节点只需分组时用 `<></>`，需要给分组传 `key` 时用显式的 `<Fragment key={id}>`。
-- 列表使用稳定且唯一的业务 `key`；索引仅适合顺序固定、不会增删重排的静态列表。
-- 注意 `0 && <X />` 会渲染数字 `0`；需要时写成 `count > 0 && <X />`。
-- 加载、失败、无数据等前置分支适合早返回，放在普通 Hooks 之后，并返回对应的 UI。简单二选一可以用三元表达式。分支开始嵌套时，按条件用早返回或 `switch`，单纯按值取结果时用映射表。
-- 简单事件可内联；复杂、复用或需独立测试的逻辑再提取处理函数。
-- 优先复用项目已有的 UI 和路由组件。没有合适组件时，按内容和交互的实际语义选原生 HTML 标签。
-- 避免未经净化使用 `dangerouslySetInnerHTML`；确需展示 HTML 时明确来源并使用经过审查的 sanitizer。
+- A component without children is self-closing, as in `<Icon />`. Use `<></>` to group siblings, and an explicit `<Fragment key={id}>` when the group needs a key.
+- Lists use a stable, unique business `key`; an index suits only a static list whose order never changes and which is never reordered.
+- Remember that `0 && <X />` renders the number `0`; write `count > 0 && <X />` when that matters.
+- Early returns fit loading, failure and empty branches; place them after ordinary Hooks and return the matching UI. A simple either-or may be a ternary. Once branches start nesting, use early returns or a `switch` by condition, and a lookup table when picking a result by value.
+- A simple event may be inline; complex, reused or separately tested logic gets a named handler.
+- Reuse the project's existing UI and routing components first. With nothing suitable, choose a native HTML element by what the content and interaction actually mean.
+- Avoid `dangerouslySetInnerHTML` without sanitizing; when HTML genuinely has to be rendered, establish its source and use a reviewed sanitizer.
 
-## UI 状态
+## UI states
 
-按需求呈现 loading、success、empty、error、disabled 等状态。空态通常是成功数据的派生 UI，不是重复的请求状态。错误提示应对用户可理解；内部堆栈进入日志 / 监控。重试操作必须真正触发重试。
+Render loading, success, empty, error and disabled as the requirement asks. An empty state is usually UI derived from a successful response, not another request state. Error messages are understandable to the user while internal stacks go to logs or monitoring. A retry action must actually retry.
 
-## 可访问性交互
+## Accessible interaction
 
-- 所有交互可通过键盘使用并保留可见焦点；图标按钮提供可访问名称。
-- 图片按语义设置 `alt`；纯装饰图使用 `alt=""`。
-- 字段错误与说明通过 `aria-describedby` 等方式关联。
-- 按组件语义管理焦点：模态 Dialog 通常需要焦点移入、焦点限制与关闭后恢复；Menu 使用自己的键盘模型；非模态 Popover / Tooltip 不应套用 Dialog 焦点陷阱。
-- 包装组件时保留原有键盘操作、焦点和可访问名称。自建复杂交互时按对应模式检查，尤其是 Dialog 和 Menu。
+- Every interaction works from the keyboard and keeps a visible focus indicator; icon-only buttons carry an accessible name.
+- Images set `alt` by meaning, and a purely decorative image uses `alt=""`.
+- Field errors and hints are associated through something like `aria-describedby`.
+- Focus follows the semantics of the component: a modal dialog usually moves focus in, traps it, and restores it on close; a menu keeps its own keyboard model; a non-modal popover or tooltip must not inherit a dialog's focus trap.
+- When wrapping a component, keep its keyboard behavior, focus handling and accessible name. A hand-built complex interaction is checked against the matching pattern, dialogs and menus especially.
 
-## 错误边界
+## Error boundaries
 
-Error Boundary 隔离渲染子树错误。仅当区域可独立失败且有合理 fallback / 恢复方式时单独设置。它不捕获普通事件处理器和大多数异步回调错误，也不能替代请求错误处理。
+An error boundary isolates a rendering subtree. Use one only where a region can fail on its own and has a reasonable fallback or recovery. It does not catch ordinary event handlers or most async callback errors, and it does not replace request error handling.

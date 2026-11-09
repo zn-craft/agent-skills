@@ -1,17 +1,17 @@
-# 业务案例：接口响应收窄
+# Case: narrowing an API response
 
-适用：从后端拉数据、存进前端状态、再渲染的链路，响应结构不受本方控制。类型由本方生成且结构稳定（GraphQL codegen 这类）时直接沿用生成类型，不重复手写 schema；一次性脚本和本地 mock 不需要这层校验。
+Applies to the path that fetches from the backend, stores into frontend state and renders, where the caller does not control the response shape. When this side generates the types and the shape is stable (GraphQL codegen and the like), use the generated types as they are and do not hand-write a second schema; one-off scripts and local mocks do not need this layer of checking.
 
-| 决策点 | 做法 | 判据 |
+| Decision point | Approach | Criterion |
 | --- | --- | --- |
-| 从哪进类型系统 | 请求层，`unknown` 起步 | 越早收窄，下游越少断言 |
-| 谁来校验 | schema 或手写 type guard | 校验逻辑跨模块复用就选 schema |
-| 类型从哪来 | 从 schema 派生 | 手写第二份 interface 迟早和后端对不上 |
-| 校验在哪做 | 只在入口做一次 | 收窄过的数据下游直接用，不再判字段在不在 |
-| 失败怎么表达 | 可恢复返回 `Result`，不可恢复抛错 | 不返回半成品对象让调用方猜 |
-| 分页与列表 | 单独建 `IPageResult<T>` | 别把分页字段拍进每个实体 |
+| Where data enters the type system | At the request layer, starting from `unknown` | The earlier it narrows, the fewer assertions downstream |
+| What validates | A schema or a hand-written type guard | Choose a schema when the check is reused across modules |
+| Where the type comes from | Derived from the schema | A second hand-written interface drifts from the backend sooner or later |
+| Where validation runs | Once, at the entry point | Narrowed data is used directly downstream, without checking again whether a field exists |
+| How failure is expressed | `Result` when recoverable, a throw when not | Never return a half-built object for the caller to guess about |
+| Pagination and lists | A separate `IPageResult<T>` | Do not stamp pagination fields onto every entity |
 
-## 案例
+## Case
 
 ```ts
 import { z } from "zod";
@@ -22,7 +22,8 @@ export const userSchema = z.object({
   role: z.enum(["admin", "member"]),
 });
 
-// 派生出来的是对象契约，照常带 I 前缀；z.enum 那种取值集合是联合类型，不带前缀。
+// What is derived is an object contract, so it keeps the I prefix; a value set
+// like z.enum is a union and takes no prefix.
 export type IUserInfo = z.infer<typeof userSchema>;
 
 export const fetchUserInfo = async (id: string): Promise<IUserInfo> => {
@@ -33,16 +34,16 @@ export const fetchUserInfo = async (id: string): Promise<IUserInfo> => {
 };
 ```
 
-## 验收
+## Acceptance
 
-1. 后端把 `role` 改成数字，校验阶段就失败，不等到线上渲染出空白。
-2. 收窄链路上搜不到 `as ` 和 `unknown as`。
-3. 字段定义只有 schema 一处；删掉手写的接口类型后代码仍能编译。
+1. Change `role` to a number on the backend and validation fails there, not later in production when the page renders blank.
+2. No `as ` or `unknown as` can be found along the narrowing path.
+3. The field definitions exist once, in the schema; deleting the hand-written interface type still compiles.
 
-## 常见误区
+## Common mistakes
 
-- 请求函数返回 `any` 或 `unknown`，把收窄推给每个调用方。
-- 用 `as IUserInfo` 跳过校验。
-- 把服务端报文外壳（`{ code, data, message }`）一路带进组件。
+- A request function returns `any` or `unknown`, pushing the narrowing onto every caller.
+- `as IUserInfo` skips validation.
+- The server envelope (`{ code, data, message }`) travels all the way into components.
 
-需要拍板的：哪些字段缺失算致命而不是给默认值、分页以 `total` 还是 `hasNext` 为准、后端字段名与前端领域名不一致时在哪一层映射。
+Decisions to confirm with the user: which missing fields are fatal rather than defaulted, whether pagination is driven by `total` or `hasNext`, and which layer maps backend field names onto frontend domain names.

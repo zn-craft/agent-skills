@@ -1,16 +1,16 @@
-# 业务案例：存量模块收窄 any
+# Case: narrowing `any` in a legacy module
 
-适用：已经跑着的模块里散落 `any`、`as`、`@ts-ignore`，要在不干扰其他改动的前提下逐步收紧。
+Applies to a module already in production with `any`, `as` and `@ts-ignore` scattered through it, where the tightening has to happen without disturbing other work.
 
-## 先定边界
+## Set the boundaries first
 
-1. **一次只碰一个范围**：一个文件或一条调用链，`git diff` 里只出现类型和必要的收窄代码，不动算法和结构，不顺手改名、改目录。
-2. **先收导出签名**：调用方一改成具体类型，往里传错值当场报错，隐藏的 `any` 就浮出来了；接着收数据边界（接口响应、`JSON.parse`、事件参数），内部函数和组件临时变量放最后。
-3. **边界处加 type guard**：判断函数返回 `value is IXxx`；范围外的 `any` 原样留着，新写的行里不出现 `any`、`!`、`@ts-ignore`。
+1. **One scope at a time**: a single file or a single call chain, so `git diff` shows the types and the narrowing code they need and nothing else — no algorithm or structure changes, no opportunistic renames or directory moves.
+2. **Exported signatures first**: the moment a caller is typed concretely, passing a wrong value fails immediately and hidden `any` surfaces. The data boundary comes next (API responses, `JSON.parse`, event arguments), and internal functions and component locals last.
+3. **Guard the boundary**: a predicate function returns `value is IXxx`; `any` outside the current scope stays as it is, and newly written lines contain no `any`, no `!`, no `@ts-ignore`.
 
-## 案例
+## Case
 
-收窄前：
+Before narrowing:
 
 ```ts
 export const sumAmounts = (data: any) => {
@@ -19,7 +19,7 @@ export const sumAmounts = (data: any) => {
 };
 ```
 
-收窄后只动类型和收窄代码，求和算法不变：
+After narrowing, only the types and the narrowing code change; the summation is untouched:
 
 ```ts
 interface IReportRow {
@@ -36,21 +36,21 @@ export const sumAmounts = (data: unknown): number => {
 };
 ```
 
-### 验收
+### Acceptance
 
-1. `sumAmounts({ items: [{ amount: 1 }] })` 通过，`sumAmounts({ items: [{}] })` 抛错。
-2. 改后 `git diff` 只有类型和收窄代码，求和那行没动。
-3. 文件里 `any` 数量下降，且没有新增 `@ts-ignore`、`!`。
+1. `sumAmounts({ items: [{ amount: 1 }] })` passes and `sumAmounts({ items: [{}] })` throws.
+2. `git diff` after the change shows types and narrowing code only; the summation line is untouched.
+3. The file has fewer `any` than before and no new `@ts-ignore` or `!`.
 
-## 常见误区
+## Common mistakes
 
-- 一上来把整个目录的 `any` 换掉，diff 几百行，评审没人看得住。
-- 把 `any` 直接换成 `unknown` 就收工，调用方反而报一片错，于是又改回去。
-- 用 `as IXxx` 假装收窄，运行时照样炸。
-- 顺手重构、改名、改目录，把类型改动和结构调整混在一起。
+- Replacing every `any` in a directory in one go, producing a diff of hundreds of lines that nobody can review.
+- Swapping `any` for `unknown` and stopping there, so the callers light up with errors and the change is reverted.
+- Pretending to narrow with `as IXxx`, which still blows up at runtime.
+- Refactoring, renaming or moving files along the way, mixing a type change into a structural change.
 
-需要拍板的：这个模块近期还会不会大改、收窄后报错的地方要编译失败还是保持兼容、有没有测试能挡住收窄引入的行为变化。
+Decisions to confirm with the user: whether this module is about to be reworked, whether newly reported errors should fail the build or stay compatible, and whether tests exist that would catch a behavior change introduced by narrowing.
 
-## 适用边界
+## Where this stops applying
 
-一次性脚本、即将删除的旧模块不必收窄。收窄前先确认有基础类型检查（`tsc --noEmit` 或等价流程），否则改完没人能验证。
+One-off scripts and modules about to be deleted do not need narrowing. Confirm basic type checking is in place (`tsc --noEmit` or an equivalent pipeline) before starting, or nobody can verify the result.

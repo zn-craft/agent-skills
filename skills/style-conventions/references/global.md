@@ -1,6 +1,6 @@
-# 全局样式
+# Global styles
 
-判据：全局作用域里的每一行都会落到所有页面，放进来就得对每个页面都成立。
+The test: every line in global scope reaches every page, so it has to hold for all of them.
 
 ```css
 @layer reset {
@@ -19,40 +19,41 @@
 }
 ```
 
-reset 只做最小集合，包在 `@layer reset` 里，选择器一律用 `:where()`。
+A reset stays a minimal set, sits inside `@layer reset`, and uses `:where()` throughout.
 
 ```css
-/* ✗ 通配符带过渡、全局文件里写某一块的样式，改一行要担心所有页面 */
+/* Wrong: a wildcard carrying a transition, and a section's styles in the global
+   file, so one line worries every page */
 * { transition: all 0.2s ease; }
 .sidebar .menu li a { color: #333333; }
 
-/* ✓ 组件样式留在组件里，全局只管基础排版 */
+/* Right: component styles stay with the component, and global handles base typography */
 .sidebarNav { color: var(--text-muted); }
 ```
 
-## 公共逻辑集中放一处
+## Shared logic in one place
 
 ```css
-/* ✓ 多个组件共用的工具类放公共文件，不散在每个组件里 */
+/* Right: utility classes shared by several components live in a shared file, not in each of them */
 @layer utilities {
   .visuallyHidden { position: absolute; clip-path: inset(50%); }
   .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 ```
 
-被两个以上组件用到、且不绑定具体业务的样式（截断、视觉隐藏、骨架屏底色）放公共文件；只服务一个组件的样式跟组件走。SCSS 项目的 mixin 与 `%placeholder` 同理，别在每个组件里各写一份同名 mixin。
+Styles used by two or more components and tied to no specific business meaning, such as truncation, visual hiding or a skeleton fill, go into a shared file; a style serving one component follows that component. SCSS mixins and `%placeholder` work the same way, and one mixin name does not get rewritten in every component.
 
-## 组件库和第三方库单独一层
+## Component libraries and third-party code get their own layer
 
 ```css
-/* ✓ 只改它开放的变量，不动内部类名 */
+/* Right: only the variables it publishes, never its internal class names */
 @layer vendors {
   :root { --swiper-theme-color: var(--color-primary); }
 }
 ```
 
-组件库自带的间距、颜色、圆角先按原样用。设计规范不同时，按它的出口逐级试：主题配置 → 组件 prop → 在容器上包变量。三级都不通再写受控选择器，别改 `.swiper-button-next` 这类内部类名，升级必崩。
+A library's own spacing, colours and radii are used as they come. Where a design differs, work down its exits one level at a time: theme configuration, then a component prop, then variables wrapped on a container. Only when all three fail do you write a scoped selector, and never edit an internal class name such as `.swiper-button-next`, which breaks on the next upgrade.
 
-## 自检
+## Self-check
 
-在全局文件里搜类名，命中的应该只有 `body`、`.container` 这类基础类和第三方变量名。出现组件名就搬回组件。
+Search the global files for class names. What turns up should be base classes such as `body` and `.container`, plus third-party variable names; a component name showing up means it belongs back in the component.

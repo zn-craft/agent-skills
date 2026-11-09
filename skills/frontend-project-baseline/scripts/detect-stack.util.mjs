@@ -1,6 +1,6 @@
 /**
- * 通用小工具：文件系统读写与依赖名单解析。
- * 其他模块统一用这里的函数，不各自实现一遍。
+ * Shared small helpers: file system reads and dependency-list parsing.
+ * Every other module uses these instead of implementing its own.
  */
 
 import { readFile, stat } from "node:fs/promises";

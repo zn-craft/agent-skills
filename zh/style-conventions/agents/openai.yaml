@@ -1,0 +1,4 @@
+interface:
+  display_name: "样式编写规范"
+  short_description: "样式的类名、变量、选择器与断点规范"
+  default_prompt: "用 $style-conventions-zh 规范这个组件的样式，新增或重构都按它的判据来。"

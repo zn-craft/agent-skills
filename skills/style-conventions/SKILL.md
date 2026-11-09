@@ -1,65 +1,65 @@
 ---
 name: style-conventions
-description: 规定样式该怎么写：类名与作用域、变量与设计 token、选择器特异性、布局与响应式断点、主题与交互状态、行内样式与运行期值、全局样式边界与文件组织。新增或修改组件样式、把设计稿落成 CSS / SCSS / Less，写 CSS Modules、Vue scoped、Tailwind 或小程序 wxss，以及排查样式互相覆盖与魔法值时使用。不负责样式检查工具的配置、构建产物优化和视觉设计评审。
+description: Style conventions that decide how styles are written: class names and scoping, variables and tokens, selector specificity, layout and breakpoints, themes and states, inline styles, global CSS and file organization. Use when changing component styles, writing CSS Modules, Tailwind or mini program wxss, or tracing overriding values. Does not cover style linter config or visual design review.
 ---
 
-# 样式编写规范
+# Style conventions
 
-判据只有一条：**这段样式只有一个出处，换个场景还成立。** 出处看三件事——值从哪来、作用到谁、要改从哪改；答不上来就先定归属，再调外观。过一遍深色、悬停、禁用、空数据、窄屏、长文案。样式没有编译期检查，选择器越平、越贴着组件，变量越集中，出错余地越小。
+One test decides everything: **this style has exactly one place it comes from, and it still holds in another context.** That place is defined by three things — where the value comes from, what it applies to, and where a change would be made. When the answer is not obvious, settle the ownership first and adjust the appearance afterwards. Walk dark mode, hover, disabled, empty data, narrow screens and long copy once each. Styles get no compile-time check, so the flatter the selectors, the closer they sit to their component, and the more central the variables, the less room there is to go wrong.
 
-## 先探测现有约定
+## Read the existing conventions first
 
-动笔前在仓库里确认这几样，已有的按现有写法走，一处都不立新规：
+Before writing, establish these in the repository, and follow whatever is already there without inventing a rule anywhere:
 
-- 样式方案与文件分布：CSS Modules、Vue scoped、Tailwind、CSS-in-JS、wxss，还是全局 CSS；样式集中在一两个文件，还是按目录分片。
-- 变量来源与存放：`tokens.css`、`theme.scss`、`tailwind.config.js`，还是散落声明；按类别拆开了，还是堆在一个文件里。
-- 断点数值：现有 `@media` 用的是哪几个宽度，方向是 min 还是 max。
-- 主题机制：`data-theme`、`.dark`、`prefers-color-scheme`，还是别的。
-- 组件库与设计参考：库是否自带间距与颜色尺度、能否直接复用；有没有设计稿、设计系统或 UI kit。
-- 行内样式：模板里的 `style` 传的是运行期值还是静态值。
-- 已定下的结论：项目里 `skill-memory/style-conventions.md` 或其他文件与注释里，有没有写明「不引入变量体系」「断点就用这三档」「统一走某个写法」这类决定，有就照它走、不再问。
+- Style approach and file layout: CSS Modules, Vue scoped, Tailwind, CSS-in-JS, wxss or global CSS; styles in one or two files or split per directory.
+- Where variables come from and live: `tokens.css`, `theme.scss`, `tailwind.config.js`, or declarations scattered around; split by category or piled into one file.
+- Breakpoint values: which widths the existing `@media` rules use, and whether they run min or max.
+- Theme mechanism: `data-theme`, `.dark`, `prefers-color-scheme` or something else.
+- Component library and design reference: whether the library ships spacing and colour scales that can be reused, and whether there is a design file, design system or UI kit.
+- Inline styles: whether the `style` in a template carries a runtime value or a static one.
+- Decisions already recorded: whether `skill-memory/style-conventions.md`, another file or a comment states something like "no variable system here", "these three breakpoints only" or "everything goes through this approach". A recorded decision is followed without asking again.
 
-确实该换方案时单独提出来，不要顺手迁移。某一项探测不到时，不要按自己的习惯补上：
+A change of approach is raised on its own rather than migrated on the way past. When something cannot be established, do not fill it in from habit:
 
-- 没有变量来源：按现有写法落值，不新开变量文件。同一类值已在三处以上重复、或这次改动本来就要批量调尺度时，在结尾问一次要不要收进一套变量；没这个信号就不提。
-- 没有断点约定：沿用现有页面在用的宽度；找不到就先靠容器查询和流式尺寸解决，不新增 `@media` 档位。
-- 没有主题机制：跟着系统走（`prefers-color-scheme`），不自造 `data-theme`。
+- No source of variables: write values the way the code already does and do not open a variables file. When the same kind of value already repeats in three or more places, or this change was going to rescale things anyway, ask once at the end whether to gather them into a set; without that signal, do not raise it.
+- No breakpoint convention: reuse the widths existing pages use; finding none, solve it with container queries and fluid sizes first and add no new `@media` step.
+- No theme mechanism: follow the system (`prefers-color-scheme`) rather than inventing `data-theme`.
 
-要用户拍板的事（引入变量体系、加断点档位、换写法或组织方式、动组件库自带样式），一次会话只问一次，答过就按答案走，不重问。答案写进项目里的 `skill-memory/style-conventions.md`，没有就新建，只记跨会话还成立的结论；记在项目里，探测读得到，换会话、换人、换工具都不用再问。
+Things the user decides — introducing a variable system, adding a breakpoint step, changing the approach or the organization, touching a component library's own styles — are asked once per session, and the answer is used from then on without asking again. The answer goes into the project's `skill-memory/style-conventions.md`, created when missing, recording only conclusions that outlive the session; it lives in the project, where the next probe reads it, so a new session, a new person or a new tool never asks twice.
 
-判据和自检由你自己判断，默认做法直接落下去，不拿来问用户。记录和仓库现状不一致时以现状为准，并更新记录。
+Judgement calls and self-checks are yours: apply the default and do not turn it into a question. When a record and the repository disagree, the repository wins and the record is updated.
 
-## 按类别找规则
+## Find the rules by category
 
-| 类别 | 影响 | 规则 |
+| Category | What it affects | Rules |
 | --- | --- | --- |
-| 作用域与命名 | 改动会不会漏到别的组件 | [scope.md](references/scope.md) |
-| 变量与 token | 改一个值要动几处 | [tokens.md](references/tokens.md) |
-| 选择器特异性 | 覆盖能不能预测 | [selectors.md](references/selectors.md) |
-| 布局与间距 | 换个内容长度或书写方向会不会塌 | [layout.md](references/layout.md) |
-| 响应式与断点 | 窄屏和长文案下的表现 | [responsive.md](references/responsive.md) |
-| 表单与原生控件 | 跨浏览器默认样式是否统一 | [controls.md](references/controls.md) |
-| 主题与状态 | 深色、悬停、禁用是否完整 | [theme.md](references/theme.md) |
-| 全局样式 | reset 与第三方覆盖的边界 | [global.md](references/global.md) |
-| 文件与目录组织 | 新样式该落在哪个文件 | [organization.md](references/organization.md) |
-| 单位与数值 | 缩放、精度与无障碍表现 | [units.md](references/units.md) |
-| 打印与导出 | 纸上的呈现跟屏幕差多少 | [print.md](references/print.md) |
-| 行内样式 | 运行期值与静态值分不分得开 | [inline.md](references/inline.md) |
-| 写法落点 | 同一份规则在各栈里怎么写 | [stack.md](references/stack.md) |
+| Scoping and naming | Whether a change leaks into other components | [scope.md](references/scope.md) |
+| Variables and tokens | How many places one value change touches | [tokens.md](references/tokens.md) |
+| Selector specificity | Whether an override is predictable | [selectors.md](references/selectors.md) |
+| Layout and spacing | Whether the layout survives longer content or another writing direction | [layout.md](references/layout.md) |
+| Responsive and breakpoints | How it behaves on narrow screens and with long copy | [responsive.md](references/responsive.md) |
+| Forms and native controls | Whether browser defaults agree | [controls.md](references/controls.md) |
+| Theme and states | Whether dark, hover and disabled are complete | [theme.md](references/theme.md) |
+| Global styles | Where reset and third-party overrides end | [global.md](references/global.md) |
+| File and directory organization | Which file a new style belongs in | [organization.md](references/organization.md) |
+| Units and numbers | Scaling, precision and accessibility | [units.md](references/units.md) |
+| Print and export | How far the page diverges on paper | [print.md](references/print.md) |
+| Inline styles | Whether runtime and static values stay apart | [inline.md](references/inline.md) |
+| Where the rules land | How one rule is written in each stack | [stack.md](references/stack.md) |
 
-只读当前用得到的那几份。
+Read only the files the current task needs.
 
-## 硬约束
+## Hard constraints
 
-- `!important` 默认不用。确实压不动的（第三方库内部样式、模板里已有的行内样式、小程序页面级覆盖）可以用，写明为什么、只压哪一处。
-- 颜色、间距、圆角、字号一律引用现有变量，缺值加进那一套，不新开平行尺度；没有变量体系的按「先探测现有约定」落值。
-- token 被多处引用、又只有一处要变时，在组件上覆盖它暴露的局部变量，或补一个更细的语义 token，不改全局值；只能写死字面值时就地注明原因。
-- 样式默认写进样式表，行内样式只放运行期值（状态、数据驱动的尺寸和色值），静态外观值回样式表。
-- 全局文件只放 reset、变量、跨组件基础排版和公共逻辑（工具类、复用的 mixin 与片段），不给 `div`、`span`、`a` 这类标签单独写样式；组件私有样式留在组件里。
-- 不用 `#id` 定位，不叠三层以上的选择器，一个类能做到就别加条件。
-- 组件库自带的样式先按原样用；设计规范不同时，走它开放的出口逐级试，不直接改内部类名。
-- 有设计稿、设计系统或 UI kit 时，尺寸、间距、颜色、状态以它给的值为准；值不在现有尺度里就在尺度上补一档并说明，不就地写死。设计好不好、要不要改稿，不做判断。
+- `!important` is off by default. Where nothing else can win — styles inside a third-party library, inline styles already in a template, page-level overrides in a mini program — it may be used, stating why and which single place it covers.
+- Colours, spacing, radii and font sizes reference existing variables; a missing value joins that set rather than opening a parallel scale, and a project without variables follows the probe above.
+- When a token is referenced in several places and only one should change, override the local variable the component exposes, or add a finer semantic token, and leave the global value alone; a hard-coded literal carries its reason on the spot.
+- Styles go into a stylesheet by default; inline styles carry runtime values only, such as state or data-driven sizes and colours, while static appearance goes back to the stylesheet.
+- A global file holds reset, variables, cross-component base typography and shared logic such as utility classes and reused mixins, never a rule aimed at `div`, `span` or `a` alone; component-private styles stay with the component.
+- No `#id` for positioning, no selector nested more than three deep, and no extra condition where one class would do.
+- A component library's own styles are used as they come; where a design differs, work through its published exits one level at a time rather than editing internal class names.
+- With a design file, design system or UI kit, its sizes, spacing, colours and states are the source; a value outside the existing scale is added to the scale with a note rather than hard-coded. Whether the design is good is not yours to judge.
 
-## 改完怎么说
+## How to report the change
 
-说明动了哪些类别和变量，窄屏、深色、键盘聚焦是否覆盖；用了 `!important` 或遇到缺变量，写出原因。有预览就真跑一遍再下结论；没有就写明「未渲染验证」，列出待人工核对的项，没看过的不写成已通过。
+State which categories and variables moved, and whether narrow screens, dark mode and keyboard focus are covered; when `!important` was used or a variable was missing, say why. With a preview available, run it before drawing a conclusion; without one, write "not verified by rendering" and list what a human has to check, never describing unverified work as passing.

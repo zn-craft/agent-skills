@@ -1,15 +1,15 @@
-# 业务案例：配置对象与常量表
+# Case: config objects and constant tables
 
-适用：写配置、选项表、路由表、表单校验规则这类「值固定、结构要检查」的常量。值要运行时拼装、结构不固定时不必上 `satisfies`。
+Applies to constants with fixed values and a shape worth checking: configuration, option tables, route tables, form validation rules. Values assembled at runtime with an unfixed shape do not need `satisfies`.
 
-| 决策点 | 做法 | 判据 |
+| Decision point | Approach | Criterion |
 | --- | --- | --- |
-| 要不要运行时值 | 要（渲染、校验、拼参数）就写 `as const` 对象 | 值只在类型里用、运行时不遍历，就别引入运行时对象 |
-| 怎么检查结构 | `satisfies` | `as` 缺字段也不报错；类型注解会把字面量放宽 |
-| 类型从哪来 | 从值派生 | `keyof typeof` 或 `(typeof X)[keyof typeof X]`，不手写第二份 |
-| 嵌套多深 | 超过三层拆成命名子对象 | 一层能写完就一层 |
+| Whether a runtime value is needed | An `as const` object when rendering, validating or building parameters needs it | When the value only serves the type and is never iterated, do not introduce a runtime object |
+| How the shape is checked | `satisfies` | `as` does not report a missing field, and a type annotation widens the literals |
+| Where the type comes from | Derived from the value | `keyof typeof` or `(typeof X)[keyof typeof X]`, not a second hand-written copy |
+| How deep to nest | Past three levels, split into named sub-objects | One level when one level is enough |
 
-## 案例
+## Case
 
 ```ts
 interface IRouteMeta {
@@ -19,25 +19,25 @@ interface IRouteMeta {
 }
 
 export const ROUTES = {
-  dashboard: { path: "/dashboard", permission: "dashboard:read", breadcrumb: "首页" },
-  users: { path: "/users", permission: "user:read", breadcrumb: "用户" },
+  dashboard: { path: "/dashboard", permission: "dashboard:read", breadcrumb: "Home" },
+  users: { path: "/users", permission: "user:read", breadcrumb: "Users" },
 } satisfies Record<string, IRouteMeta>;
 
 export type RouteKey = keyof typeof ROUTES;
 ```
 
-`breadcrumb` 拼成 `breadcum`，`satisfies` 当场报错；`ROUTES.dashboard.path` 的类型仍是字面量 `"/dashboard"`，不是 `string`。
+Misspell `breadcrumb` as `breadcum` and `satisfies` reports it on the spot, while `ROUTES.dashboard.path` keeps the literal type `"/dashboard"` instead of widening to `string`.
 
-## 验收
+## Acceptance
 
-1. 给某个路由加一个 `IRouteMeta` 之外的多余字段，`satisfies` 报错。
-2. 删掉任一 `path`，报缺字段。
-3. `RouteKey` 是 `"dashboard" | "users"`，不是 `string`。
+1. Adding an extra field beyond `IRouteMeta` to a route makes `satisfies` complain.
+2. Deleting any `path` reports the missing field.
+3. `RouteKey` is `"dashboard" | "users"`, not `string`.
 
-## 常见误区
+## Common mistakes
 
-- 用 `const x: IXxx = {...}`，以为写了类型就安全，结果字面量被放宽。
-- 只写 `as const` 不加 `satisfies`，结构写错也不报。
-- 手写一份类型、一份值，两边各改各的。
+- `const x: IXxx = {...}`, written for safety, which widens every literal.
+- `as const` without `satisfies`, so a wrong shape goes unreported.
+- A hand-written type and a hand-written value that drift apart.
 
-需要拍板的：结构会不会扩成多层嵌套、`RouteKey` 要不要导出给别的模块、这份取值表要不要被构建脚本读取。
+Decisions to confirm with the user: whether the shape will grow into deeper nesting, whether `RouteKey` is exported to other modules, and whether a build script reads this value table.

@@ -1,41 +1,46 @@
 {
-  // 应用主配置。构建脚本、测试、库产物各自拆成 tsconfig.<用途>.json，用 extends 复用这里。
+  // The application's main config. Build scripts, tests and library output each
+  // get their own tsconfig.<purpose>.json that reuses this one through extends.
   "compilerOptions": {
-    // 编译目标：语法和内置 API 按这个版本判断，产物再交给打包器降级
+    // Compile target: syntax and built-in APIs are judged against this version,
+    // and the bundler downgrades the output further
     "target": "ES2022",
-    // 可用的内置类型：ES 语法库 + 浏览器 DOM；只在 Node 跑的包去掉 DOM
+    // Available built-in types: the ES library plus the browser DOM; drop DOM for
+    // a package that only runs on Node
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    // 源码里的模块语法保持 ESNext，降级由打包器负责
+    // Keep ESNext module syntax in source and let the bundler downgrade it
     "module": "ESNext",
-    // 由打包器负责解析模块路径（Vite / webpack / Rspack 都是这套）
+    // Let the bundler resolve module paths, which Vite, webpack and Rspack all do
     "moduleResolution": "bundler",
-    // 框架不需要处理 JSX 时删掉这一行
+    // Delete this line when the framework does not process JSX
     "jsx": "preserve",
 
-    // 严格度总开关。下面这三项不在 strict 里，单独列出；存量项目按分档顺序一档一档开
+    // The master strictness switch. The three below are not part of strict and
+    // are listed separately; an existing project turns them on a step at a time
     "strict": true,
-    // 下标取值的结果带上 undefined，数组和 Record 取值前必须先判空
+    // Index access yields undefined too, so arrays and Record lookups are checked first
     "noUncheckedIndexedAccess": true,
-    // 未使用的局部变量直接报错
+    // An unused local is an error
     "noUnusedLocals": true,
-    // 未使用的函数参数直接报错，不需要的参数就删掉
+    // An unused parameter is an error; delete the parameters that are not needed
     "noUnusedParameters": true,
-    // switch 的 case 必须 break、return 或 throw，避免意外贯穿
+    // Every switch case has to break, return or throw, so nothing falls through
     "noFallthroughCasesInSwitch": true,
 
-    // 类型导入必须写成 import type，转译后不留运行时代码
+    // Type-only imports must be written import type, leaving no runtime code behind
     "verbatimModuleSyntax": true,
-    // 每个文件都能单独转译，esbuild / SWC 这类单文件工具才敢加速
+    // Every file can be transpiled on its own, which is what lets esbuild and SWC
+    // compile file by file
     "isolatedModules": true,
-    // 允许 import JSON，配置和数据文件可以直接引
+    // Allow importing JSON, so config and data files can be referenced directly
     "resolveJsonModule": true,
-    // 让 CommonJS 依赖支持默认导入写法
+    // Let default imports work against CommonJS dependencies
     "esModuleInterop": true,
-    // 跳过第三方包的类型检查，检查更快
+    // Skip type checking of third-party packages, which keeps checks fast
     "skipLibCheck": true,
-    // 只做类型检查，产物交给打包器
+    // Type checking only; the bundler produces the output
     "noEmit": true
   },
-  // 覆盖全部源码目录；产物目录和依赖不要写进来
+  // Cover every source directory; build output and dependencies do not belong here
   "include": ["src"]
 }

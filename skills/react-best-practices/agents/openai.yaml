@@ -1,4 +1,4 @@
 interface:
   display_name: "React Best Practices"
-  short_description: "帮助 AI 写出简洁、可靠、易维护的 React 代码"
-  default_prompt: "使用 $react-best-practices，先检查当前 React 版本、渲染环境和项目约定；只读取当前任务相关的规则或业务模式，优先用简单、正确的方式完成任务，避免无关重构，并按项目现有脚本验证。"
+  short_description: "Write React components that stay simple, correct and easy to maintain"
+  default_prompt: "Use $react-best-practices: check the React version, rendering environment and project conventions first, read only the rules or business patterns this task needs, prefer the simple correct solution, avoid unrelated refactors, and verify with the project's existing scripts."

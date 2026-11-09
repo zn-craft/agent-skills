@@ -1,46 +1,46 @@
 ---
 name: typescript-best-practices
-description: TypeScript 的类型建模与写法决策：新建、修改、评审或重构 TS 代码时使用。定类型怎么建（interface / type / 联合 / 枚举 / as const）、边界数据怎么从 unknown 收窄、any 与断言怎么过渡、错误与领域概念怎么用类型表达、严格度怎么取舍，以及 `.tsx` 里组件 Props、事件、ref 和泛型组件的类型。通用 JS 风格、模块目录与 JSX 渲染，以及 tsconfig 和 lint 配置都不管。
+description: TypeScript type modeling: use when writing, changing, reviewing or refactoring TS code. Covers declaring types, narrowing boundary data from unknown, retiring any and assertions, expressing errors and domain concepts in types, choosing strictness, and typing Props / events / refs and generic components in .tsx. Does not cover JS style, module layout, JSX rendering, tsconfig or lint config.
 ---
 
-# TypeScript 最佳实践
+# TypeScript best practices
 
-每条规则都落到判据上：什么情况这么做、什么信号说明写坏了、怎么改。动笔前先看工程现状：`tsconfig` 严格度、命名风格、`interface` 与 `type` 的用法、类型目录和路径别名；工程已有约定时按工程来，这里只做兜底。
+Every rule here rests on a criterion: when it applies, what signal says the code went wrong, and how to fix it. Before writing, read the project as it stands — `tsconfig` strictness, naming style, how `interface` and `type` are used, the type directory and path aliases. When the project already has a convention, follow it; this skill only fills the gaps.
 
-## 写法
+## How to write
 
-- 对象结构用 `interface`，联合、交叉、映射、条件类型用 `type`；对象契约（含 schema 派生）加 `I` 前缀，`enum` 加 `E` 前缀，联合、工具与键名类型不加。
-- 外部数据从 `unknown` 起步，用 type guard 收窄；不写 `any`，不用 `!` 和 `@ts-ignore`。
-- 导出的函数写返回类型；本模块的类型与取值定义（`interface`、`type`、`enum`、`as const` 取值表）默认写进 `xxx.type.ts`，不要求被两处引用才拆；`declare` 与第三方补声明写进 `xxx.d.ts`，函数与类留在实现文件。
-- 补类型不动业务逻辑、不加新依赖；工程没开 `strict` 时，只保证改动的文件按严格写法写。
-- 文件是 `.tsx` 时只处理类型：Props、事件、ref、泛型组件；组件拆分、状态、Hooks、Effect 与渲染行为不归这里。
-- 不擅自升级规则版本、改 `tsconfig` 严格度，或成批重排类型文件，这些会牵动全量代码。
+- Object shapes use `interface`; unions, intersections, mapped and conditional types use `type`. Object contracts, including ones derived from a schema, take the `I` prefix, `enum` takes `E`, and unions, utility types and key types take no prefix.
+- External data starts as `unknown` and narrows through a type guard; no `any`, no `!`, no `@ts-ignore`.
+- Exported functions state their return type. Types and value definitions belonging to this module (`interface`, `type`, `enum`, `as const` value tables) go into `xxx.type.ts` by default, and do not need two call sites before they earn their own file. `declare` and third-party augmentations go into `xxx.d.ts`; functions and classes stay in the implementation file.
+- Adding types does not move business logic and does not add dependencies. When the project has no `strict`, keep to strict style in the files this change touches.
+- In a `.tsx` file, only types are in scope: Props, events, refs, generic components. Component boundaries, state, Hooks, Effects and render behavior belong elsewhere.
+- Do not upgrade rule sets on your own, change `tsconfig` strictness, or reshuffle type files in bulk; those ripple through the whole codebase.
 
-## 按需读取
+## Read on demand
 
-先按上面的规则写。遇到具体问题再查对应文档，有业务取舍先看案例。
+Write to the rules above first. Look up the matching document when a specific question comes up, and check the cases when a business tradeoff is involved.
 
-### 日常写法
+### Everyday writing
 
-| 任务 | 读取文件 |
+| Task | File |
 | --- | --- |
-| 类型怎么建、放在哪、领域概念、泛型与工具类型用到什么程度 | [type-modeling.md](references/type-modeling.md) |
-| `any` 怎么过渡、`unknown` 怎么收窄、断言与兜底分支、错误与异步失败 | [type-safety.md](references/type-safety.md) |
-| 类型命名、`import type` 与 `export type`、类成员修饰符与函数参数 | [naming-and-declaration.md](references/naming-and-declaration.md) |
-| `.tsx` 里组件 Props、事件、ref 与泛型组件的类型怎么标 | [jsx-types.md](references/jsx-types.md) |
+| How to declare a type, where it lives, domain concepts, how far to take generics and utility types | [type-modeling.md](references/type-modeling.md) |
+| Moving off `any`, narrowing `unknown`, assertions and fallback branches, errors and async failures | [type-safety.md](references/type-safety.md) |
+| Type naming, `import type` and `export type`, class member modifiers and function parameters | [naming-and-declaration.md](references/naming-and-declaration.md) |
+| Typing component Props, events, refs and generic components in `.tsx` | [jsx-types.md](references/jsx-types.md) |
 
-### 业务案例
+### Business cases
 
-| 任务 | 读取文件 |
+| Task | File |
 | --- | --- |
-| 接口响应从 `unknown` 收到领域对象的整条链路 | [api-response.md](references/patterns/api-response.md) |
-| 订单、流程的状态取值与允许的流转怎么建模 | [state-machine.md](references/patterns/state-machine.md) |
-| 给存量模块逐处收窄 `any`，不扩大 diff | [legacy-any.md](references/patterns/legacy-any.md) |
-| 用 `satisfies` 写配置对象和常量表 | [config-object.md](references/patterns/config-object.md) |
+| The whole path from an API response as `unknown` to a domain object | [api-response.md](references/patterns/api-response.md) |
+| Modeling order and workflow states with the transitions they allow | [state-machine.md](references/patterns/state-machine.md) |
+| Narrowing `any` in a legacy module field by field, without growing the diff | [legacy-any.md](references/patterns/legacy-any.md) |
+| Writing config objects and constant tables with `satisfies` | [config-object.md](references/patterns/config-object.md) |
 
-## 需要用户拍板时
+## When the user has to decide
 
-- 先读 `skill-memory/typescript-best-practices.md`，命中就照做、不再问。
-- 要问的：严格项怎么收、存量 `any` 收到什么范围、类型要不要单独抽文件、继承层次要不要拆。
-- 只在这类答案会影响多处代码时问；问完把结论和一句理由写进该文件，不抄对话。
-- 其余按代码现状定：命名、局部类型拆不拆、某个 `as` 留不留，以及工程里已有的同类决定（已有类型文件、已在用枚举）。
+- Read `skill-memory/typescript-best-practices.md` first; a recorded answer is followed without asking again.
+- What to ask: how far to tighten strictness, how much of the legacy `any` to narrow, whether types deserve their own file, whether an inheritance chain should be split.
+- Ask only when the answer changes code in more than one place; write the conclusion and one line of reasoning into that file afterwards, not the conversation.
+- Everything else follows the code as it is: naming, whether a local type gets extracted, whether a particular `as` stays, and the decisions the project already made, such as an existing type file or an enum already in use.

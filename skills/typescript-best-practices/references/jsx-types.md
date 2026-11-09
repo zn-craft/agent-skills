@@ -1,15 +1,15 @@
-# JSX 与组件类型
+# JSX and component types
 
-管 `.tsx` 里 Props、事件、ref 和泛型组件的类型怎么标。组件怎么拆、状态放哪、渲染行为见项目里的 React 约定，这里只管类型。
+Covers how Props, events, refs and generic components are typed in `.tsx`. How components are split, where state lives and how rendering behaves follow the React conventions in the project; this file is types only.
 
-## Props 与组件类型
+## Props and component types
 
-- Props 是对象契约，沿用其他对象类型的规则：用 `interface`，命名 `I` + 组件名 + `Props`（`IUserCardProps`）；互斥状态才改成 `type` 联合。
-- `children` 只在组件确实接收内容时声明，类型用 `React.ReactNode`。
-- 包装组件库时复用组件公开的 Props、事件和 ref 类型。库没有单独导出 Props 时，从 `React.ComponentProps<typeof Button>` 取，并只暴露包装组件实际支持的属性。
-- 包装原生元素时从对应标签取类型：不转发 ref 用 `React.ComponentPropsWithoutRef<"button">`，转发 ref 用 `React.ComponentPropsWithRef<"button">`。
-- 互斥模式用判别式联合表达，不用一堆可选 Props 拼出非法状态。
-- 函数参数标 Props 类型，返回类型交给推导；`React.FC` 不是错误 API，不为风格偏好批量改写存量代码。
+- Props are object contracts and follow the other object type rules: `interface`, named `I` + component name + `Props` (`IUserCardProps`). Only mutually exclusive states turn into a `type` union.
+- Declare `children` only when the component genuinely takes content, typed `React.ReactNode`.
+- When wrapping a component library, reuse the Props, event and ref types the component publishes. When the library exports no Props type of its own, take it from `React.ComponentProps<typeof Button>` and expose only the attributes the wrapper actually supports.
+- When wrapping a native element, take the type from the tag: `React.ComponentPropsWithoutRef<"button">` without ref forwarding, `React.ComponentPropsWithRef<"button">` with it.
+- Mutually exclusive modes are expressed as a discriminated union rather than an assortment of optional Props that can spell an illegal state.
+- Function parameters are typed as Props while the return type is inferred; `React.FC` is not a broken API, so existing code is not rewritten in bulk for style preference.
 
 ```tsx
 interface IAlertProps {
@@ -19,19 +19,20 @@ interface IAlertProps {
   onConfirm?: () => void;
 }
 
-// 互斥状态改成判别式联合，调用方不可能同时传 text 和 onConfirm。
-// 这里是 type 别名，按联合类型处理，不加 I 前缀。
+// Mutually exclusive states become a discriminated union, so a caller cannot
+// pass text and onConfirm at the same time. This one is a type alias over a
+// union, so it takes no I prefix.
 type StrictAlertProps = { children: React.ReactNode } & (
   | { kind: "text"; text: string }
   | { kind: "action"; onConfirm: () => void }
 );
 ```
 
-## 事件
+## Events
 
-- 回调 Props 写明确签名，如 `(id: string) => void`，不用 `Function` 或 `any`。
-- 事件类型跟着实际回调走。组件库的回调直接传选中值时，沿用它的签名；只有原生输入框的 change 才用 `React.ChangeEvent<HTMLInputElement>`。
-- 组件库自己声明了事件类型就用它的，不手写一个近似类型代替。
+- Callback Props state their signature, such as `(id: string) => void`, never `Function` or `any`.
+- Event types follow the actual callback. When a component library hands the selected value straight to the callback, keep its signature; only a native input's change uses `React.ChangeEvent<HTMLInputElement>`.
+- When the component library declares its own event type, use it instead of writing an approximate one.
 
 ```tsx
 interface ISearchProps {
@@ -40,11 +41,11 @@ interface ISearchProps {
 }
 ```
 
-## ref
+## refs
 
-- DOM ref 用准确元素类型和 `null` 初值：`React.useRef<HTMLInputElement>(null)`，不用 `any`。
-- 组件库可能暴露 DOM 节点，也可能暴露自定义句柄（`focus`、`scrollTo` 之类），以实际声明为准。
-- 转发 ref 或使用 Fragment ref 前先确认项目实际 React 版本，不同版本的类型写法不一样。
+- A DOM ref uses the exact element type and a `null` initial value: `React.useRef<HTMLInputElement>(null)`, never `any`.
+- A component library may expose a DOM node or a custom handle such as `focus` or `scrollTo`; the published declaration decides.
+- Confirm the React version in use before forwarding refs or using Fragment refs, since the typing differs between versions.
 
 ```tsx
 const inputRef = React.useRef<HTMLInputElement>(null);
@@ -54,9 +55,9 @@ const focusInput = (): void => {
 };
 ```
 
-## 泛型 Props
+## Generic Props
 
-调用方的数据类型需要同时约束多个 Props 时再用泛型。列表组件的 `items` 和 `onSelect` 共享同一个元素类型就是典型场景；只有一个具体类型时直接写具体类型。
+Reach for generics when the caller's data type has to constrain several Props at once. A list component whose `items` and `onSelect` share one element type is the typical case; a single concrete type is written as that concrete type.
 
 ```tsx
 interface ISelectProps<T> {

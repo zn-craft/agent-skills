@@ -1,42 +1,42 @@
-# 变量与 token
+# Variables and tokens
 
-判据：改一次品牌色或间距尺度，只改 token 定义处。
+The test: changing a brand colour or a spacing scale touches the token definitions only.
 
-仓库里没有 token 体系时，不为一次改动搭三层结构，也不新开变量文件充数：按现有写法落值，把用到的值列进说明。要不要收进一套变量，按「先探测现有约定」的规则决定问不问；问过就把结论记进 `skill-memory/style-conventions.md`。设计稿给的色值、间距先找对应的语义 token，找不到就把新值加进尺度，不把字面值抄进组件。
+With no token system in place, do not build a three-layer structure for one change and do not open a variables file to look complete: write values the way the code already does and list the values used in the explanation. Whether they should be gathered into a set is decided by the probe in the main file; once asked, the conclusion goes into `skill-memory/style-conventions.md`. Colour and spacing values from a design file look for a matching semantic token first, and a missing one joins the scale rather than being copied into the component as a literal.
 
-## 分三层
+## Three layers
 
-| 层 | 例子 | 谁引用它 |
+| Layer | Example | Who references it |
 | --- | --- | --- |
-| 原始值 | `--blue-600: oklch(0.55 0.2 264)` | 只被语义层引用 |
-| 语义 | `--color-primary: var(--blue-600)` | 组件、页面 |
-| 局部 | `--btn-bg: var(--color-primary)` | 组件内部，允许被外部覆盖 |
+| Raw value | `--blue-600: oklch(0.55 0.2 264)` | Only the semantic layer |
+| Semantic | `--color-primary: var(--blue-600)` | Components and pages |
+| Local | `--btn-bg: var(--color-primary)` | Inside the component, allowed to be overridden from outside |
 
 ```css
 :root {
-  /* 原始值：全项目只出现一次 */
+  /* Raw values: each appears once in the whole project */
   --blue-600: oklch(0.55 0.2 264);
-  /* 语义：名字说用途，不说颜色 */
+  /* Semantic: the name states the purpose, not the colour */
   --color-primary: var(--blue-600);
-  /* 尺度：间距、圆角、字号各一套 */
+  /* Scales: one each for spacing, radius and type size */
   --space-4: 16px;
   --radius-sm: 4px;
 }
 ```
 
-跳层会同时丢掉"换个牌子就能换色"和"这里为什么是蓝色"两件事。
+Skipping a layer loses two things at once: that a rebrand can swap the colour, and why this particular blue is here.
 
-## 组件只引用语义层
+## Components reference the semantic layer only
 
 ```css
-/* ✗ 三个魔法值，改一次要全局搜索十六进制 */
+/* Wrong: three magic values, and one change means searching for the hex code everywhere */
 .tip {
   color: #dc2626;
   border: 1px solid #dc2626;
   padding: 11px;
 }
 
-/* ✓ 只引用 token */
+/* Right: tokens only */
 .tip {
   color: var(--color-danger);
   border: 1px solid var(--color-danger);
@@ -44,49 +44,49 @@
 }
 ```
 
-尺度值不要写成组件专有的 `--tip-padding: 11px`；组件专有变量留给真的会被外部调的值。
+Do not turn a scale value into a component-specific `--tip-padding: 11px`; a component-private variable is for the values that genuinely get adjusted from outside.
 
-## 对外只暴露一个变量
+## Expose one variable to the outside
 
 ```css
 .btn { --btn-bg: var(--color-primary); background: var(--btn-bg); }
 ```
 
-使用方写 `.toolbar .btn { --btn-bg: var(--color-neutral); }`。暴露的变量不超过三四个，多了等于把内部实现开放出去。
+A consumer writes `.toolbar .btn { --btn-bg: var(--color-neutral); }`. No more than three or four exposed variables; beyond that the internals are public.
 
-## 只有一处要改时
+## When only one place should change
 
-token 被别处引用，改它的值等于改所有引用方。先分清是哪种情况：
+A token referenced elsewhere changes every reference when its value changes. Work out which case this is first:
 
-- 只有这一处要跟别处不同：不动 token，在组件上覆盖它暴露的局部变量，或在调用处传一个更贴语境的值。
-- 同一个 token 被两类用途引用：粒度不够，拆成两个语义 token，比如链接色与危险色分开。
-- 所有引用方都该跟着变：这才是改 token 定义处的场合。
+- Only this one place differs: leave the token alone, override the local variable the component exposes, or pass a value that fits the context at the call site.
+- One token serves two kinds of use: the granularity is wrong, so split it into two semantic tokens, keeping a link colour apart from a danger colour.
+- Every reference should follow: this is the case for editing the token definition.
 
 ```css
-/* ✓ 只让这一处的按钮换色，全局的 --color-primary 不动 */
+/* Right: only this button changes colour; the global --color-primary stays put */
 .dangerZone .btn { --btn-bg: var(--color-danger); }
 ```
 
-没有 token 可挂、只能写死字面值时，在那一行注明为什么。
+With no token to hang it on and a literal as the only option, note the reason on that line.
 
-## 命名
+## Naming
 
-`--<类别>-<用途>[-<状态>]`，类别只用 color、space、font、radius、shadow、motion、z；状态用 `hover`、`active`、`disabled`。同名变量全项目含义唯一，`--primary` 和 `--color-primary` 不并存。
+`--<category>-<purpose>[-<state>]`, with categories limited to color, space, font, radius, shadow, motion and z, and states to `hover`, `active` and `disabled`. One name means one thing project-wide: `--primary` and `--color-primary` never coexist.
 
-## 按类别分开存放
+## Store them split by category
 
-一个类别一个文件，改色只开 color 那份，不用在长文件里翻：
+One file per category, so a colour change opens the colour file instead of scrolling a long one:
 
 ```text
 styles/tokens/
-  color.css       /* 原始色阶与语义色 */
-  space.css       /* 间距尺度 */
-  font.css        /* 字体、字号、行高、字重 */
+  color.css       /* raw scales and semantic colours */
+  space.css       /* spacing scale */
+  font.css        /* family, size, line height, weight */
   radius.css
   shadow.css
-  motion.css      /* 时长与缓动 */
-  z.css           /* 层级 */
-  index.css       /* 只做汇总 @import */
+  motion.css      /* durations and easing */
+  z.css           /* stacking layers */
+  index.css       /* @import only */
 ```
 
-类别名跟命名前缀保持一致，新增一类就加一个文件。变量只有几十个时，一个 `tokens.css` 加分区注释就够；过了一屏长度再拆。
+Category names match the naming prefix, and a new category gets a new file. With only a few dozen variables a single `tokens.css` with section comments is enough; split once it runs past a screen.

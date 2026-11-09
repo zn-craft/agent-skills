@@ -1,21 +1,21 @@
 /** @type {import("@commitlint/types").UserConfig} */
 export default {
-  // 沿用 Conventional Commits 的基础规则
+  // Keep the Conventional Commits base rules
   extends: ["@commitlint/config-conventional"],
   rules: {
-    // 只允许这些类型前缀，和 changelog 的分节对应
+    // Only these type prefixes, matching the sections of the changelog
     "type-enum": [
       2,
       "always",
       ["feat", "fix", "refactor", "perf", "docs", "test", "build", "ci", "chore", "revert"],
     ],
-    // 标题过长会被提交列表和 PR 界面截断
+    // A long subject gets truncated in commit lists and the pull request view
     "header-max-length": [2, "always", 72],
-    // 中文提交信息不受大小写规则约束
+    // Case rules do not apply to commit messages written without Latin script
     "subject-case": [0],
     "scope-case": [0],
   },
-  // 合并提交、回滚提交、依赖机器人放行
+  // Merge commits, reverts and dependency bots pass through
   ignores: [
     (message) => /^Merge /.test(message),
     (message) => /^Revert /.test(message),

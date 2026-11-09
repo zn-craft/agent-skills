@@ -1,12 +1,13 @@
-// 框架无关基线。React 用 eslint-plugin-react-hooks，Vue 用 eslint-plugin-vue，Svelte 用 svelte-eslint-parser，
-// 各自把 flat config 追加到这个数组里即可。
+// Framework-agnostic baseline. React uses eslint-plugin-react-hooks, Vue uses
+// eslint-plugin-vue and Svelte uses svelte-eslint-parser, each appending its own
+// flat config to this array.
 import js from "@eslint/js";
 import globals from "globals";
 import prettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  // 产物、依赖、生成代码不参与检查
+  // Build output, dependencies and generated code are not checked
   {
     ignores: [
       "dist/**",
@@ -18,35 +19,38 @@ export default tseslint.config(
     ],
   },
 
-  // JS 基础规则；TS 文件由下面的类型感知配置接管
+  // Base JS rules; the type-aware config below takes over for TS files
   js.configs.recommended,
 
   {
     languageOptions: {
-      // 浏览器与 Node 的全局变量；不做 SSR 可以只留 browser
+      // Browser and Node globals; without SSR, browser alone is enough
       globals: { ...globals.browser, ...globals.node },
     },
     rules: {
-      // 放行 == null，其余比较一律用 ===
+      // Allow == null and require === everywhere else
       eqeqeq: ["error", "smart"],
-      // 正式代码的日志走统一封装，这里只提示
+      // Production logging goes through a wrapper, so this only warns
       "no-console": "warn",
     },
   },
 
-  // 类型感知规则只作用于 TS 文件，配置文件不在 tsconfig 的 include 里也不会报错
+  // Type-aware rules apply to TS files only, so a config file outside the
+  // tsconfig include does not raise an error
   {
     files: ["**/*.{ts,tsx,mts,cts}"],
     extends: [...tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parserOptions: {
-        // 按文件就近找 tsconfig，monorepo 下每个包各自一份也能匹配上
+        // Find the nearest tsconfig per file, which also works when a monorepo
+        // has one per package
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
-      // 未使用的变量和参数降成提示，下划线开头表示有意保留
+      // Unused variables and parameters warn, and a leading underscore marks a
+      // deliberate omission
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {
@@ -55,20 +59,20 @@ export default tseslint.config(
           caughtErrorsIgnorePattern: "^_",
         },
       ],
-      // 忘了 await 的 Promise 会导致错误静默丢失
+      // A promise missing an await loses its error silently
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
-      // 类型导入写成 import type，转译后不留运行时代码
+      // Type imports are written import type, leaving no runtime code behind
       "@typescript-eslint/consistent-type-imports": "warn",
     },
   },
 
-  // 脚本和配置文件允许打印日志
+  // Scripts and config files may print to the console
   {
     files: ["scripts/**", "**/*.config.{js,mjs,cjs,ts}"],
     rules: { "no-console": "off" },
   },
 
-  // 放最后：关掉与 Prettier 冲突的风格规则
+  // Last: turn off the style rules that conflict with Prettier
   prettier,
 );

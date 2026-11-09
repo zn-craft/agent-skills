@@ -1,46 +1,46 @@
-# 单位与数值
+# Units and numbers
 
-判据：用户把浏览器字号调大、手机地址栏收起时，布局的表现仍然可预期。
+The test: the layout behaves predictably once the user raises the browser font size or the mobile address bar collapses.
 
-## 字号与间距用相对单位
+## Font sizes and spacing use relative units
 
 ```css
-/* ✓ 字号跟用户设置走，描边不跟着变粗 */
+/* Right: the type size follows the user's setting, and the border does not thicken with it */
 .title { font-size: 1.25rem; }
 .card { padding: var(--space-4); border: 1px solid var(--border); }
-.icon { width: 1em; height: 1em; } /* 图标随所在文字缩放 */
+.icon { width: 1em; height: 1em; } /* the icon scales with the text around it */
 ```
 
-字号用 `rem`，跟着用户调的浏览器字号走；`em` 留给要随所在文字缩放的（图标、跟文字的内边距）。间距用 token，token 的值按设计稿写 `px` 也可以，组件里只出现 `var(--space-*)`，不写字面值。`px` 只留给不该缩放的东西：1px 描边、发丝线、位图尺寸。
+Font sizes use `rem` so they follow the browser setting; `em` is for what scales with the surrounding text, such as icons and padding tied to type. Spacing uses tokens, whose values may well be written in `px` from the design file, while components only ever show `var(--space-*)`. `px` is left for what must not scale: a 1px border, a hairline, a bitmap size.
 
-## 视口单位要挑动态的
+## Viewport units have to be the dynamic ones
 
 ```css
-/* ✗ 移动端 100vh 会被地址栏截掉一截 */
+/* Wrong: 100vh on mobile gets cut off by the address bar */
 .sheet { height: 100vh; }
-/* ✓ 动态视口单位跟着实际可视区域走 */
+/* Right: the dynamic viewport unit follows the visible area */
 .sheet { max-height: 80dvh; }
 ```
 
-宽度优先用 `%`、`min()`、`max()` 表达相对关系；输入框这类按字符排的宽度用 `ch`，比如 `max-width: 32ch`。
+Widths express relationships through `%`, `min()` and `max()` first; a width measured in characters, such as an input, uses `ch`, for example `max-width: 32ch`.
 
-## 颜色只保留一种写法
+## Keep one way of writing colours
 
 ```css
-/* ✗ 关键字与 rgba 混用，换主题时两种格式都得改 */
+/* Wrong: keywords mixed with rgba, so a theme change edits both formats */
 .tag { color: red; background: rgba(0, 0, 0, 0.06); }
-/* ✓ 一种格式到底 */
+/* Right: one format throughout */
 .tag { color: var(--color-danger); background: oklch(0% 0 0 / 6%); }
 ```
 
-新项目统一用 `oklch()`，已有项目统一用十六进制，不新增第三种；色值存进 token，组件里不出现字面值。
+A new project uses `oklch()` throughout, an existing one keeps its hex values, and neither adds a third format; colour values live in tokens and no literal appears in a component.
 
-需要透明度就沿用同一种语法的写法（`oklch(… / 6%)`、`rgb(… / 0.06)`），需要两个颜色相混用 `color-mix()`。换格式的那一行注明原因，两种格式并存只允许出现在 token 定义处。
+Transparency keeps the same syntax (`oklch(… / 6%)`, `rgb(… / 0.06)`), and mixing two colours uses `color-mix()`. Changing format is noted with its reason, and two formats coexisting is allowed only where tokens are defined.
 
-## 数值回到尺度上
+## Numbers return to the scale
 
-出现 `3.7px`、`11px`、`13px` 这类不在尺度里的值，先看是不是该用 `var(--space-3)` 或 `clamp()`。比例、行高、`letter-spacing` 用无单位数值或 `em`，不用 `px`。
+Values that are not on the scale, such as `3.7px`, `11px` or `13px`, are checked first for whether `var(--space-3)` or `clamp()` is what was meant. Ratios, line heights and `letter-spacing` use unitless numbers or `em`, never `px`.
 
-## 收尾
+## Finishing
 
-浏览器字号调到 200%、系统缩放到 150% 各看一次，不出现截断与重叠即可；没有渲染环境就把这两项留给人工核对。
+Look once at a 200% browser font size and once at 150% system zoom, with no truncation or overlap; without a rendering environment, leave both to a human to check.

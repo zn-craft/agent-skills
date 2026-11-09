@@ -4,7 +4,7 @@
 # Examples:
 #   bash scripts/install-skill.sh my-skill --agent codex
 #   bash scripts/install-skill.sh my-skill --agent claude --project
-#   bash scripts/install-skill.sh my-skill --dest /path/to/skills
+#   bash scripts/install-skill.sh my-skill --dest /path/to/skills --lang zh
 #   curl -fsSL https://raw.githubusercontent.com/zn-craft/agent-skills/main/scripts/install-skill.sh | bash -s -- my-skill --agent codex
 
 set -euo pipefail
@@ -18,6 +18,7 @@ GLOBAL=0
 PROJECT=0
 FORCE=0
 SKILL=""
+LANG=""
 
 usage() {
   cat <<'EOF'
@@ -32,6 +33,7 @@ Options:
   --global            Install into the agent's user-level skills directory (default)
   --project           Install into ./.<name>/skills in the current project
   --dest <dir>        Install into an explicit skills directory
+  --lang <en|zh>      Install this language version; defaults to en when present, otherwise zh
   --force             Replace an existing installation, keeping a timestamped backup
   -h, --help          Show this help
 
@@ -62,6 +64,10 @@ while [ "$#" -gt 0 ]; do
       FORCE=1
       shift
       ;;
+    --lang)
+      LANG="${2:-}"
+      shift 2
+      ;;
     -h | --help)
       usage
       exit 0
@@ -89,6 +95,13 @@ fi
 case "$SKILL" in
   */* | . | ..)
     echo "Invalid skill name: $SKILL" >&2
+    exit 2
+    ;;
+esac
+case "$LANG" in
+  "" | en | zh) ;;
+  *)
+    echo "Invalid --lang: $LANG (use en or zh)" >&2
     exit 2
     ;;
 esac
@@ -129,26 +142,34 @@ if [ -z "$DEST" ]; then
   fi
 fi
 
-echo "Installing $SKILL into $DEST"
-
-# First directory named "$SKILL" under "<root>/skills" that holds a SKILL.md.
+# 英文版在 skills/<名>/，中文版在 zh/<名>/；没指定语言时优先英文版。
 find_skill() {
-  { find "$1/skills" -mindepth 1 -type d -name "$SKILL" 2>/dev/null || true; } |
-    sort |
-    while IFS= read -r dir; do
-      if [ -f "$dir/SKILL.md" ]; then
-        printf '%s\n' "$dir"
-        break
-      fi
-    done
+  local root="$1"
+  if [ "$LANG" = "en" ]; then
+    [ -f "$root/skills/$SKILL/SKILL.md" ] && printf '%s\n' "$root/skills/$SKILL"
+  elif [ "$LANG" = "zh" ]; then
+    [ -f "$root/zh/$SKILL/SKILL.md" ] && printf '%s\n' "$root/zh/$SKILL"
+  elif [ -f "$root/skills/$SKILL/SKILL.md" ]; then
+    printf '%s\n' "$root/skills/$SKILL"
+  elif [ -f "$root/zh/$SKILL/SKILL.md" ]; then
+    printf '%s\n' "$root/zh/$SKILL"
+  fi
 }
 
 list_skills() {
-  { find "$1/skills" -type f -name SKILL.md 2>/dev/null || true; } |
-    sort |
-    while IFS= read -r file; do
-      echo "  - ${file%/SKILL.md}" | sed "s|.*/skills/||" >&2
-    done
+  local root="$1" name langs
+  for name in $(
+    {
+      find "$root/skills" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+      find "$root/zh" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+    } | while IFS= read -r dir; do basename "$dir"; done | sort -u
+  ); do
+    langs=""
+    [ -f "$root/skills/$name/SKILL.md" ] && langs="$langs en"
+    [ -f "$root/zh/$name/SKILL.md" ] && langs="$langs zh"
+    [ -n "$langs" ] || continue
+    echo "  - $name [$(printf '%s' "$langs" | sed 's/^ //')]" >&2
+  done
 }
 
 # Prefer the checkout this script lives in when it is run locally.
@@ -170,9 +191,9 @@ skill_src=""
 if [ -n "$checkout_root" ] && [ -d "$checkout_root/skills" ]; then
   skill_src="$(find_skill "$checkout_root")"
   if [ -n "$skill_src" ]; then
-    echo "Using local checkout: skills/$SKILL"
+    echo "Using local checkout: ${skill_src#"$checkout_root"/}"
   else
-    echo "Skill '$SKILL' not found in this checkout ($checkout_root/skills)." >&2
+    echo "Skill '$SKILL' not found in this checkout ($checkout_root)." >&2
     echo "Available skills:" >&2
     list_skills "$checkout_root"
     exit 1
@@ -218,7 +239,12 @@ if [ -z "$skill_src" ]; then
 fi
 
 mkdir -p "$DEST"
-target="$DEST/$SKILL"
+lang_parent="${skill_src%/*}"
+lang_used="en"
+[ "${lang_parent##*/}" = "zh" ] && lang_used="zh"
+install_name="$SKILL"
+[ "$lang_used" = "zh" ] && install_name="$SKILL-zh"
+target="$DEST/$install_name"
 if [ -e "$target" ]; then
   if [ "$FORCE" -eq 1 ]; then
     backup="$target.bak.$(date +%Y%m%d%H%M%S)"
@@ -232,4 +258,4 @@ if [ -e "$target" ]; then
 fi
 
 cp -R "$skill_src" "$target"
-echo "Installed $SKILL -> $target"
+echo "Installed $install_name ($lang_used) -> $target"

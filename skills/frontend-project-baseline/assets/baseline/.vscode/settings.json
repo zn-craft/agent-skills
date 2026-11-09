@@ -1,17 +1,17 @@
 {
-  // 保存即格式化，少一次"忘了跑 format"
+  // Format on save, removing one more "forgot to run format"
   "editor.formatOnSave": true,
-  // 统一用 Prettier，不用各编辑器自带的默认格式化
+  // Prettier throughout, rather than each editor's own default formatter
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  // 保存时跑能自动修的 lint 和样式检查，跑不完的部分交给 CI
+  // Run the fixable part of lint and style checking on save; the rest is CI's job
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.fixAll.stylelint": "explicit"
   },
-  // ESLint 9 起 flat config 是唯一入口
+  // Flat config has been the only entry point since ESLint 9
   "eslint.useFlatConfig": true,
-  // 这些类型的文件交给 stylelint 扩展
+  // Files of these types go to the stylelint extension
   "stylelint.validate": ["css", "scss", "less"],
-  // 与 prettier 的 endOfLine: lf 对齐
+  // Aligned with prettier's endOfLine: lf
   "files.eol": "\n"
 }

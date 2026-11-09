@@ -1,0 +1,4 @@
+interface:
+  display_name: "{{display-name}}"
+  short_description: "{{short-description}}"
+  default_prompt: "使用 ${{skill-name}}-zh 完成 TODO。"

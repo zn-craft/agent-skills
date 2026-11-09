@@ -1,48 +1,48 @@
-# 不带界面的模块：api、store、hooks、utils
+# Modules without a UI: api, store, hooks, utils
 
-这类模块没有渲染，但文件分工和组件模块完全一致：主逻辑 + 按需补的 `.type` / `.config` / `.mock` / `.test`。
+These modules render nothing, and their file roles match component modules exactly: main logic plus a `.type`, `.config`, `.mock` or `.test` file as needed.
 
-## api 模块
+## api module
 
-按资源切文件，一个资源一个文件。
+Files split by resource, one resource per file.
 
 ```text
 api/
 ├── index.ts
-├── userApi.ts           # 请求函数
-├── userApi.type.ts      # IUser、IUserQuery、IUserListResponse
-├── userApi.config.ts    # USER_API 路径表、DEFAULT_PAGE_SIZE
-├── userApi.mock.ts      # makeUser()，给测试和本地调试用
+├── userApi.ts           # request functions
+├── userApi.type.ts      # IUser, IUserQuery, IUserListResponse
+├── userApi.config.ts    # USER_API path table, DEFAULT_PAGE_SIZE
+├── userApi.mock.ts      # makeUser() for tests and local debugging
 └── userApi.test.ts
 ```
 
-- 请求函数只负责发请求和映射数据，业务判断交给调用方。api 层里不要塞 state 更新、路由跳转。
-- 请求体、响应体、查询参数的类型都写进 `xx.type.ts`，返回类型显式标注，别让调用方去猜。
-- 接口路径表、错误码映射、默认分页大小放 `xx.config.ts`（或模块级 `api/endpoints.config.ts`）。
-- `xx.mock.ts` 导出工厂函数而不是裸对象，参数能覆盖关键分支，测试和 mock 服务复用同一份。
-- 测试用请求适配器 mock（msw 之类），不要 mock 掉自己写的请求函数，那等于没测。
+- A request function sends the request and maps the data; business decisions belong to the caller. No state updates or route changes inside the api layer.
+- Request bodies, response bodies and query parameters are typed in `xx.type.ts`, with the return type written out rather than left for callers to guess.
+- Endpoint tables, error-code mappings and default page sizes go into `xx.config.ts`, or a module-level `api/endpoints.config.ts`.
+- `xx.mock.ts` exports a factory rather than a bare object, its parameters cover the key branches, and tests and a mock server share the same one.
+- Tests mock at the request adapter (msw and the like) instead of mocking your own request function, which would test nothing.
 
-## store 模块
+## store module
 
-一个 store 一个文件，文件名跟着框架惯例走（Pinia `useUserStore.ts`、Redux `userSlice.ts`、Zustand `useUserStore.ts`）。
+One store per file, named after the framework's convention (Pinia `useUserStore.ts`, Redux `userSlice.ts`, Zustand `useUserStore.ts`).
 
 ```text
 store/
 ├── index.ts
 ├── useUserStore.ts
-├── useUserStore.type.ts   # State、Action、对外暴露的类型
+├── useUserStore.type.ts   # State, Action and the types the store exposes
 └── useUserStore.mock.ts   # makeInitialUserState()
 ```
 
-- state、action 的类型写进 `xx.type.ts`，包括 store 对外暴露的返回类型。
-- 初始 state 用 `xx.mock.ts` 里的工厂函数返回，重置 store 和写测试复用同一份，不要在两处各写一份默认值。
-- 异步 action 调 api 模块，不在 store 里直接写 `fetch` / `axios`：请求细节只有 api 层知道。
-- 派生状态用框架自带的 getter / selector，不要在 store 里缓存一份手动同步的副本。
-- 测试断言 action 对 state 的影响；请求部分用 api 层的 mock 兜住。
+- State and action types go into `xx.type.ts`, including the shape the store returns to its consumers.
+- The initial state comes from a factory in `xx.mock.ts`, so resetting the store and writing tests share one definition instead of two copies of the defaults.
+- An async action calls the api module rather than writing `fetch` or `axios` inside the store: the request details only the api layer knows.
+- Derived state uses the framework's own getter or selector instead of a manually synchronized copy cached in the store.
+- Tests assert what an action does to state, with the request side covered by the api layer's mock.
 
-## hooks / utils 模块
+## hooks / utils modules
 
-一个能力一个文件，文件名即能力名。
+One capability per file, and the file name is the capability.
 
 ```text
 hooks/
@@ -52,22 +52,22 @@ hooks/
 └── useDebounce.test.ts
 ```
 
-- utils 里只放纯函数，不 import 具体业务模块；一旦要 import 商店或请求，它就该是 hooks 或 store。
-- `xx.config.ts` 在这类模块里通常放缓存 key 前缀、防抖 / 节流的默认时长、可配置的阈值。
-- 通用性不明确时先放调用方旁边，被第二个模块用到再上提到共享目录。
+- utils holds pure functions only and imports no business module; the moment it needs a store or a request it belongs in hooks or a store.
+- In these modules `xx.config.ts` usually holds cache key prefixes, default debounce and throttle durations, and configurable thresholds.
+- When the reuse case is unclear, keep it beside the caller and promote it to a shared directory once a second module needs it.
 
-## 跨模块引用
+## Cross-module imports
 
-- 同模块内部：相对路径直连目标文件。
-- 跨模块：import 对方的 `index.ts`，不要深挖到 `other/impl/detail.ts`，否则对方的目录调整会波及你。
-- 只被一个模块用的东西放在那个模块里，不要提前放进共享目录。
+- Inside a module: a relative path straight to the target file.
+- Across modules: import the other module's `index.ts` instead of reaching into `other/impl/detail.ts`, or their directory reshuffle becomes yours.
+- Something only one module uses stays in that module rather than moving into a shared directory early.
 
-## 文件内容对照
+## What goes in each file
 
-### api 模块：四个文件各写什么
+### api module: four files, four jobs
 
 ```ts
-// userApi.type.ts：请求与响应的结构全在这里
+// userApi.type.ts: request and response shapes all live here
 export interface IUser {
   id: string;
   name: string;
@@ -85,7 +85,7 @@ export interface IUserListResponse {
 ```
 
 ```ts
-// userApi.config.ts：接口路径与默认分页收在一处
+// userApi.config.ts: endpoints and the default page size in one place
 export const USER_API = {
   list: "/api/users",
   detail: (id: string) => `/api/users/${id}`,
@@ -95,7 +95,7 @@ export const DEFAULT_PAGE_SIZE = 20;
 ```
 
 ```ts
-// userApi.ts：只拼参数、发请求、返回类型化数据
+// userApi.ts: build the parameters, send the request, return typed data
 import { DEFAULT_PAGE_SIZE, USER_API } from "./userApi.config";
 import type { IUserListResponse, IUserQuery } from "./userApi.type";
 
@@ -111,17 +111,17 @@ export const fetchUserList = (
 ```
 
 ```ts
-// userApi.mock.ts：工厂函数能覆盖关键分支
+// userApi.mock.ts: a factory whose parameters cover the key branches
 import type { IUser } from "./userApi.type";
 
 export const makeUser = (overrides: Partial<IUser> = {}): IUser => ({
   id: "u_1",
-  name: "张三",
+  name: "Ada Lovelace",
   ...overrides,
 });
 ```
 
-### hooks 模块：默认值从 config 取
+### hooks module: defaults come from config
 
 ```ts
 // useDebounce.type.ts
@@ -137,7 +137,7 @@ export const DEFAULT_DEBOUNCE_MS = 300;
 ```
 
 ```ts
-// useDebounce.ts：一个文件只写一个能力
+// useDebounce.ts: one file, one capability
 import { useEffect, useState } from "react";
 
 import { DEFAULT_DEBOUNCE_MS } from "./useDebounce.config";
@@ -156,4 +156,4 @@ export const useDebounce = <T,>(value: T, options: IUseDebounceOptions = {}) => 
 };
 ```
 
-主逻辑只 import 类型和配置，不反过来被它们依赖；`xx.type.ts` 里不放运行时代码，`xx.config.ts` 里不放副作用。
+The main logic imports types and configuration and is never imported back by them; `xx.type.ts` holds no runtime code, and `xx.config.ts` holds no side effects.

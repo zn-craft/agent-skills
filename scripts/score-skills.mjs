@@ -2,9 +2,10 @@
 /**
  * 给 skills/ 下的 skill 打分，给 CI 当合入门禁用。
  *
- *   node scripts/score-skills.mjs                         # 给所有 skill 打分
- *   node scripts/score-skills.mjs skills/foo              # 只打分指定的 skill
- *   node scripts/score-skills.mjs --changed origin/main   # 只打分相对该 ref 有改动的 skill
+ *   node scripts/score-skills.mjs                              # 给所有语言版本打分
+ *   node scripts/score-skills.mjs skills/foo                   # 只打分指定的 skill
+ *   node scripts/score-skills.mjs skills/foo/zh                # 只打分指定的语言版本
+ *   node scripts/score-skills.mjs --changed origin/main        # 只打分相对该 ref 有改动的版本
  *   node scripts/score-skills.mjs --min 8.5 --json
  *
  * 满分 10 分，按六个维度扣减，每条扣分都给出文件和行号。低于 --min（默认 8.5）时退出码为 1。

@@ -1,6 +1,7 @@
 /**
- * 工作区探测：读 workspace 声明（pnpm / npm / yarn / Lerna / Rush），
- * 把 glob 展开成子包目录，再逐包检查 tsconfig、lint、格式化配置。
+ * Workspace detection: read the workspace declaration (pnpm, npm, yarn, Lerna
+ * or Rush), expand its globs into package directories, then check each
+ * package's tsconfig, lint and formatting configuration.
  */
 
 import { readdir } from "node:fs/promises";

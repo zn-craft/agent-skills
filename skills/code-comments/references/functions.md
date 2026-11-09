@@ -1,58 +1,58 @@
-# 函数与方法注释
+# Comments on functions and methods
 
-写函数、方法、hook、组件、对外导出的 API 时读这份。
+Read this when writing a function, a method, a hook, a component or an exported API.
 
-函数注释补的是**签名表达不出的契约**：前置条件、返回边界、抛错、副作用、单位、是否幂等、调用顺序要求。
+A function comment carries **the contract its signature cannot express**: preconditions, return boundaries, thrown errors, side effects, units, idempotence, required call order.
 
-## 公共接口用块注释
+## Public interfaces take block comments
 
-被别处调用、且契约里有签名说不清的东西时必须用块注释，比如非法输入是抛错还是返回 `NaN`、返回值有没有做过归一化、失败会不会留副作用。导出不等于要写 JSDoc，签名自解释的不写；内部函数只在有非显然约束时用 `//` 补一行。
+Anything called from elsewhere whose contract has something the signature cannot say needs a block comment — whether invalid input throws or returns `NaN`, whether the return value is normalized, whether a failure leaves a side effect behind. Being exported does not by itself require JSDoc; a self-explanatory signature gets none. An internal function gets one `//` line only when it carries a non-obvious constraint.
 
-"签名自解释"看的是调用方能拿到什么，不是函数体有多短：调用方悬停看到的是声明，函数体里的实现不在声明上，所以单行包装照样可能该写。名字和类型已经把契约说完的才不写；确该改代码的要改代码，改不了或不该改时才落到注释。
+"Self-explanatory signature" is about what the caller can see, not how short the body is: a hover at the call site shows the declaration, and the body is not part of it, so a one-line wrapper may still need a comment. Only a name and a type that already state the whole contract need none; when the code should change instead, change the code, and fall back to a comment only when it cannot or should not.
 
-在调用点发现契约缺失时，补到声明上：只写一条调用点注释，下一个调用方还得再踩一遍。
+When the missing contract shows up at a call site, fix it on the declaration: a single comment at the call site just leaves the next caller to trip over the same thing.
 
-标签只在有信息时用：
+Tags earn their place only when they carry information:
 
-| 标签 | 什么时候写 | 冗余写法 |
+| Tag | When to write it | The redundant version |
 | --- | --- | --- |
-| `@param` | 参数有范围、格式、单位或前置条件 | `@param {string} id 用户 ID` |
-| `@returns` | 返回边界不显然：可能为空、可能为 `-1`、顺序有保证 | `@returns 用户列表` |
-| `@throws` | 会抛错且调用方需要处理 | 不写，调用方只能靠试 |
-| `@deprecated` | 必须带替代方案和移除条件 | 只写"已弃用" |
-| `@example` | 用法不显然，比如参数组合有讲究 | 给简单 getter 写示例 |
-| `@default` | 默认值来源不在签名里 | — |
+| `@param` | the argument has a range, a format, a unit or a precondition | `@param {string} id the user ID` |
+| `@returns` | the boundary is not obvious: may be empty, may be `-1`, order guaranteed | `@returns the user list` |
+| `@throws` | it throws and the caller has to handle that | leaving it out, so callers learn by crashing |
+| `@deprecated` | always with the replacement and the removal condition | a bare "deprecated" |
+| `@example` | the usage is not obvious, for instance argument combinations matter | an example for a plain getter |
+| `@default` | the default comes from somewhere the signature does not show | — |
 
-## 案例
+## Cases
 
-返回边界
-✗ `// 获取用户列表` + `getUserList()`
-✓ `/** 无结果时返回空数组，不返回 null */`
-依据：缺调用方要处理的边界
+Return boundary
+✗ `// get the user list` above `getUserList()`
+✓ `/** Returns an empty array when there is nothing, never null */`
+reason: the boundary the caller must handle is missing
 
-单行包装
-✗ 不写，理由是"函数体就一行，看一眼就懂"
-✓ `/** 解析失败返回 NaN，不抛错 */`
-依据：调用方看到的是声明不是函数体，失败边界在声明上查不到
+One-line wrapper
+✗ nothing, on the grounds that the body is one line and reads easily
+✓ `/** Returns NaN when parsing fails; it does not throw */`
+reason: the caller sees the declaration, not the body, and the failure boundary is not in the declaration
 
-前置条件
-✗ `// 计算价格`
-✓ `/** 调用前必须先 init()，否则读到的是默认汇率 */`
-依据：顺序要求签名里看不到
+Precondition
+✗ `// compute the price`
+✓ `/** init() must run first, otherwise this reads the default exchange rate */`
+reason: the required order is invisible in the signature
 
-副作用
-✗ `// 发送通知`
-✓ `/** 除发送外还会把通知标记为已读，失败不回滚 */`
-依据：隐藏后果调用方要知道
+Side effect
+✗ `// send a notification`
+✓ `/** Also marks the notification as read, and does not roll that back on failure */`
+reason: the caller has to know about the hidden consequence
 
-弃用
+Deprecation
 ✗ `/** @deprecated */`
-✓ `/** @deprecated 用 fetchOrders 替代，接口 2026-03 下线 */`
-依据：弃用的价值全在替代方案和期限
+✓ `/** @deprecated Use fetchOrders; this endpoint goes away in 2026-03 */`
+reason: the value of a deprecation notice is entirely in the replacement and the deadline
 
-## 语言落点差异
+## Where languages differ
 
-- TS：类型写在签名里，注释只补语义和边界。
-- JS：没有类型系统，JSDoc 承担参数与返回值的类型。
-- Python：docstring 紧跟 `def`，Args / Returns / Raises 与签名一一对应；已有类型注解时不重复类型。
-- Go：文档注释写在声明前、以被注释的对象名开头，用完整句子，不用标签。
+- TS: types live in the signature, so comments carry semantics and boundaries only.
+- JS: no type system, so JSDoc carries the types of parameters and return values.
+- Python: the docstring sits directly under `def`, and Args / Returns / Raises line up one-to-one with the signature; skip types when annotations already exist.
+- Go: the doc comment goes above the declaration, opens with the name of the thing it documents, and uses full sentences instead of tags.

@@ -1,21 +1,21 @@
-# React 性能与日常优化
+# React performance and everyday optimization
 
-## 先找到慢在哪里
+## Find what is slow first
 
-复现卡顿后，用浏览器 Performance 面板区分脚本、布局和绘制开销，用 React Profiler 找耗时的子树。等数据时查网络面板，定位到请求后看 [客户端请求与缓存](client-data.md)。
+Once the stutter reproduces, use the browser Performance panel to separate script, layout and paint cost, and the React Profiler to find the expensive subtree. While waiting on data, check the network panel; once a request is identified, see [client data and caching](client-data.md).
 
-## 少做和当前交互无关的工作
+## Do less work unrelated to the current interaction
 
-| 症状 | 优先检查和调整 |
+| Symptom | Check and adjust first |
 |---|---|
-| 输入或勾选时，旁边的列表和图表也更新 | 状态放到需要它的组件。普通 `useContext` 读取整个 Context，解构字段也会随 Provider 的值更新。确有开销时，按职责和更新频率拆 Context，或沿用项目已有的 selector 订阅所需字段。 |
-| 改一行，整张表的行都变成新对象 | 不可变更新只复制变化路径，保留未修改行的引用。行渲染仍贵、Props 通常相同时，再考虑 `memo`。 |
-| 输入要立刻响应，结果区更新很慢 | 先减少结果区的计算或渲染工作。结果允许稍晚显示时，再考虑 `useDeferredValue`，并让昂贵子树能跳过使用旧值的那次更新。搜索是否防抖按交互要求另定。 |
-| 拖动或滚动时频繁掉帧 | 检查事件是不是每次都触发重计算、状态更新或布局测量。只需要每帧最新位置时，可以按帧合并。多次测量并修改 DOM 时，先批量读取，再写入。 |
-| 数据到了，列表展开或滚动仍慢 | 分清是行太多还是单行太重。能分批查看就考虑分页。需要连续滚动且 DOM 数量是瓶颈时，评估虚拟列表，并验证键盘焦点、选中和编辑草稿。 |
-| 首次打开页面慢，编辑器或图表很少用 | 先确认该模块占了多少首屏脚本和初始化时间。可以用项目已有方式按需加载，再测首次打开它的等待时间。 |
+| Typing or toggling a checkbox also updates a nearby list and chart | Put state in the component that needs it. A plain `useContext` read takes the whole Context, so destructuring fields still updates with the Provider value. Where that cost is real, split Context by responsibility and update frequency, or keep the project's existing selector subscription for the fields needed. |
+| Editing one row turns every row in the table into a new object | An immutable update copies only the path that changed and keeps the references of untouched rows. When row rendering is still expensive and Props are usually equal, consider `memo`. |
+| Input must respond immediately while the results area updates slowly | Cut computation or rendering in the results area first. When a slightly later result is acceptable, consider `useDeferredValue` and let the expensive subtree skip the update that uses the old value. Whether typing is debounced is a separate interaction decision. |
+| Dragging or scrolling drops frames | Check whether the handler recomputes, sets state or measures layout on every event. When only the latest position per frame matters, coalesce by frame. When measuring and changing the DOM repeatedly, read in a batch first and write afterwards. |
+| Data has arrived, but expanding or scrolling the list is still slow | Separate too many rows from one heavy row. Consider pagination when users can page through. When scrolling is continuous and DOM count is the bottleneck, evaluate a virtual list and verify keyboard focus, selection and editing drafts. |
+| The first page load is slow and the editor or chart is rarely used | Confirm how much first-load script and initialization that module takes. Load it on demand the way the project already does, then measure the wait for opening it the first time. |
 
-例如表格只改一行时，保留其余行的对象引用。这里假设行 ID 唯一。
+When a table edits one row, for example, keep the object references of the other rows. This assumes row ids are unique.
 
 ```tsx
 setRows((rows) =>
@@ -23,18 +23,18 @@ setRows((rows) =>
 );
 ```
 
-## 状态和资源
+## State and resources
 
-- 界面要随值更新就用 state 或可订阅的数据源。定时器 ID、请求序号和第三方实例只需在同一次挂载中跨渲染保留时，用 `ref`，在事件或 Effect 中读写。
-- 只在弹窗打开时才需要的订阅和定时器，跟着打开和关闭建立、清理。准备卸载隐藏面板前，先确认草稿、滚动位置或焦点是否需要保留。
-- 昂贵的初始值只依赖首次挂载时，可以传纯初始化函数给 `useState`。依赖会变化的数据仍按实际依赖计算。
-- 缓存前先确认哪里耗时、输入多久变一次。项目启用 Compiler 时，先确认目标文件确实经过编译。手写比较函数的成本和它省下的渲染一起测。
+- Anything the interface must follow uses state or a subscribable source. A timer id, a request sequence number or a third-party instance that only has to survive re-renders within one mount uses `ref`, read and written in events or Effects.
+- Subscriptions and timers needed only while a dialog is open are created and cleared with it. Before unloading a hidden panel, confirm whether the draft, scroll position or focus has to survive.
+- An expensive initial value that depends only on the first mount may take a pure initializer function in `useState`. Values that depend on data still compute from their real dependencies.
+- Before caching, confirm what is expensive and how often the input changes. With the Compiler enabled, confirm the file in question is actually compiled. Measure a hand-written comparison function against the renders it saves.
 
-## 渲染期开销
+## Render-time cost
 
-- 与 Props 和 state 无关的配置放模块作用域；只在点击导出这类操作时才用到的格式化，放在对应流程里，不留在渲染路径上。
-- 渲染期间对列表做查找或统计时，先看数据规模和触发频率：数据小就别折腾结构，规模大或每次交互都重算时再减少渲染里的工作量。
+- Configuration unrelated to Props and state goes to module scope; formatting needed only for a click such as exporting stays in that flow instead of on the render path.
+- When a render looks up or aggregates a list, check the data size and how often it runs first: small data is not worth restructuring, while large data or recomputation on every interaction calls for less work in render.
 
-## 记录团队经验
+## Recording what the team learns
 
-记录场景、改法、结果和适用条件。性能收益用同一数据量和操作复测。通用判断留在本页，业务细节放对应案例。
+Write down the scenario, the change, the result and the conditions it holds under. Re-measure performance gains with the same data size and actions. General judgement stays on this page; business detail belongs in the matching case file.

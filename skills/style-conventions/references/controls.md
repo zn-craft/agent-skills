@@ -1,8 +1,8 @@
-# 表单与原生控件
+# Forms and native controls
 
-判据：换一个浏览器打开，输入框、下拉、复选框的样子和行为仍然一致，键盘也都用得起来。
+The test: in another browser the inputs, selects and checkboxes still look and behave the same, and the keyboard still reaches everything.
 
-原生控件默认不继承字体与颜色，各浏览器样式又不一样。在基础层统一一次，好过在每个组件里各覆盖一遍。
+Native controls do not inherit fonts or colours, and each browser styles them differently. Settling it once in the base layer beats overriding it in every component.
 
 ```css
 @layer base {
@@ -22,26 +22,26 @@
 }
 ```
 
-## 不要藏掉原生控件再自绘
+## Do not hide the native control and draw your own
 
 ```css
-/* ✗ 藏了原生控件，键盘、读屏和表单语义一起丢 */
+/* Wrong: hiding the control loses the keyboard, the screen reader and the form semantics with it */
 .pretty [type="checkbox"] { display: none; }
 
-/* ✓ 只调颜色与尺寸，其余交给浏览器 */
+/* Right: adjust colour and size and leave the rest to the browser */
 .field [type="checkbox"] { accent-color: var(--color-primary); width: 1rem; height: 1rem; }
 ```
 
-必须完全自绘时用 `appearance: none` 保留元素本身，聚焦态另补（见「主题与状态」）：
+When a full custom drawing is genuinely required, keep the element and use `appearance: none`, adding the focus state separately (see "Themes and states"):
 
 ```css
-/* ✓ 元素还在，只是换了外观 */
+/* Right: the element is still there, only its appearance changed */
 .field [type="checkbox"] { appearance: none; inline-size: 1rem; block-size: 1rem; border: 1px solid var(--border); }
 .field [type="checkbox"]:checked { background: var(--color-primary); border-color: var(--color-primary); }
 ```
 
-下拉、日期、时间、文件选择这几类内部 UI 不要重写：各浏览器渲染不同，移动端还会丢掉原生的滚动与选择行为，只调尺寸、颜色和边框。
+Do not rewrite the internal UI of selects, date, time or file pickers: every browser draws them differently, mobile loses the native scrolling and selection behavior, and only size, colour and border are worth changing.
 
-## 自检
+## Self-check
 
-不碰鼠标，用 Tab 走一遍表单，每个控件都要有可见的聚焦框；再点一次提交，看有没有控件被浏览器拦下却没提示。
+Walk the form with Tab alone, without the mouse, and every control shows a visible focus ring; submit once more and see whether the browser blocks anything without saying so.

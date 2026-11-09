@@ -1,55 +1,55 @@
-# 格式化与静态检查
+# Formatting and static analysis
 
-边界：格式化决定代码长什么样（缩进、引号、换行），静态检查找可疑代码（未处理的 Promise、hooks 依赖、可疑比较）。先格式化后 lint，反过来会让风格规则混进 lint，接格式化工具时还得逐条关掉。
+The boundary: formatting decides what code looks like (indentation, quotes, line breaks) while static analysis finds suspicious code (an unhandled promise, hook dependencies, a dubious comparison). Format first and lint second; the other order lets style rules leak into lint and leaves you disabling them one by one when the formatter arrives.
 
-## 两条路线
+## Two routes
 
-| 路线 | 组成 | 适合 | 代价 |
+| Route | Makeup | Fits | Cost |
 | --- | --- | --- | --- |
-| 组合 | ESLint（flat config）+ Prettier | 需要框架专用规则或自定义规则 | 两份配置和忽略文件，偶尔要关冲突规则 |
-| 单工具 | Biome | 新项目、只要基本规则、在意速度 | 规则集小，冷门框架要自己写 |
+| Combined | ESLint (flat config) with Prettier | Needing framework-specific or custom rules | Two sets of config and ignore files, plus the occasional rule turned off because the two disagree |
+| Single tool | Biome | New projects, basic rules only, speed matters | A smaller rule set, and an unusual framework means writing your own |
 
-默认走组合。没有框架专用规则需求、也不想维护两份配置时换 Biome，格式化一起交给它。
+The combined route is the default. Biome is for when no framework-specific rules are needed and maintaining two configs is not worth it, with formatting handed to it as well.
 
-## 样式检查
+## Style checking
 
-CSS / SCSS / Less 单独用 stylelint。Prettier 只管样式长什么样，不认识未知属性、重复选择器、`!important` 滥用这类问题。
+CSS, SCSS and Less use stylelint on their own. Prettier only decides what the styles look like; it knows nothing about unknown properties, duplicate selectors or `!important` abuse.
 
-| 项目 | 配置 |
+| Project | Config |
 | --- | --- |
-| 纯 CSS | `stylelint-config-standard` |
-| SCSS / Less | `stylelint-config-standard-scss` 或 `less` 版，加 `customSyntax` |
-| Vue / Svelte 单文件组件 | 加 `postcss-html`，让 stylelint 能进 `<style>` 块 |
+| Plain CSS | `stylelint-config-standard` |
+| SCSS or Less | `stylelint-config-standard-scss`, or the Less variant, with `customSyntax` |
+| Vue or Svelte single-file components | Add `postcss-html` so stylelint can reach the `<style>` blocks |
 
-产物目录、第三方样式用 `ignoreFiles` 排除。stylelint 的风格类规则和 Prettier 打架时，关掉对应规则，格式化仍由 Prettier 负责。仓库里没有样式文件就跳过这一项，别配了不用。
+Build output and third-party styles are excluded through `ignoreFiles`. Where stylelint's stylistic rules fight Prettier, turn those rules off and leave formatting to Prettier. A repository with no style files skips this item rather than configuring something unused.
 
-## 规则分层
+## Layering the rules
 
-| 级别 | 放什么 | 例子 |
+| Level | What goes there | Examples |
 | --- | --- | --- |
-| error | 会导致运行错误或明确缺陷 | `react-hooks/rules-of-hooks`、`no-floating-promises` |
-| warn | 一致性、可疑但可能是有意的 | 未使用变量、`no-console` |
-| 关掉 | 交给格式化工具或类型系统管的 | `indent`、`quotes`、`no-unused-vars` |
+| error | Will cause a runtime failure or a clear defect | `react-hooks/rules-of-hooks`, `no-floating-promises` |
+| warn | Consistency, or suspicious but possibly deliberate | Unused variables, `no-console` |
+| Off | Handled by the formatter or the type system | `indent`, `quotes`, `no-unused-vars` |
 
-判断标准：这条规则报的问题会不会让用户遇到错误。会就 error，只是看着不对就 warn。一次全开成 error 是最常见的失败方式，结果是有人加 disable，或者 PR 卡住没人敢合。
+The test: would the problem this rule reports reach the user as an error? If yes it is an error, and if it merely looks wrong it is a warning. Switching everything to error at once is the most common way this fails, and it ends with someone adding a disable or with a stuck pull request nobody dares merge.
 
-## 配置要点
+## Configuration points
 
-- 产物目录、生成代码、lock 文件一律忽略；生成代码要修就修生成器。
-- 用 Prettier 时把 `eslint-config-prettier` 放 extends 最后。
-- 类型感知规则（`no-floating-promises`）要指定 `project`，代价是变慢，放 CI 跑。
-- 测试、脚本、配置文件用 overrides 分开处理，不要靠 disable 打补丁。
-- 逐行 disable 要写原因：`// eslint-disable-next-line no-console -- 启动日志需要`。
+- Build output, generated code and lock files are always ignored; generated code is fixed by fixing the generator.
+- With Prettier, `eslint-config-prettier` goes last in extends.
+- A type-aware rule such as `no-floating-promises` needs `project` and pays for it in speed, so it runs in CI.
+- Tests, scripts and config files are handled by overrides rather than patched with disables.
+- A line-level disable states its reason: `// eslint-disable-next-line no-console -- startup logging`.
 
-## 命令
+## Commands
 
-| 命令 | 作用 | 在哪里跑 |
+| Command | Effect | Where it runs |
 | --- | --- | --- |
-| `lint` | 全量检查 | CI |
-| `lint:fix` | 自动修可修的 | 本地 |
-| `format` | 全量格式化 | 本地 |
-| `format:check` | 只检查不写入 | CI |
-| `stylelint` | 样式全量检查 | CI |
-| `stylelint:fix` | 样式自动修可修的 | 本地 |
+| `lint` | The full check | CI |
+| `lint:fix` | Fixes what it can | Locally |
+| `format` | Formats everything | Locally |
+| `format:check` | Checks without writing | CI |
+| `stylelint` | The full style check | CI |
+| `stylelint:fix` | Fixes what it can in styles | Locally |
 
-`format:check` 必须有，否则格式化没进 CI，只靠本地自觉。`stylelint` 只在项目有样式文件时要，命令名别换成 `css-lint` 之类，CI 和钩子都按这个名字调。仓库里放 `.vscode/settings.json` 和 `extensions.json`（保存时格式化、推荐扩展），不要写个人偏好。
+`format:check` is mandatory, or formatting never reaches CI and relies on everyone locally. `stylelint` is only needed where the project has style files, and its command name stays `stylelint` rather than becoming `css-lint`, since CI and the hooks call it by name. A repository carries `.vscode/settings.json` and `extensions.json` for format-on-save and recommended extensions, not personal preferences.

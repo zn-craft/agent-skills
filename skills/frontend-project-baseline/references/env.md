@@ -1,35 +1,35 @@
-# 环境变量
+# Environment variables
 
-环境变量分两类，处理方式不同：能进客户端代码的会被打进产物，等于公开；只在构建脚本、服务端、CI 里用的必须留在服务端。前者靠前缀区分，后者不能带前缀。
+Environment variables come in two kinds, handled differently: anything that reaches client code is bundled into the output and therefore public, while anything used only by build scripts, the server or CI stays on the server. The first kind is told apart by its prefix, and the second must carry none.
 
-## 模板与真实值
+## Template and real values
 
-| 文件 | 进版本库 | 说明 |
+| File | In version control | Notes |
 | --- | --- | --- |
-| `.env.example` | 是 | 只写变量名和占位值，新克隆的人照着建本地文件 |
-| `.env.local` | 否 | 真实值放这里，`.gitignore` 排除 |
-| `.env.development` / `.env.production` | 视情况 | 不含密钥时可以提交，含密钥一律不提交 |
+| `.env.example` | Yes | Variable names and placeholder values only, so a fresh clone knows what to create locally |
+| `.env.local` | No | Real values live here, excluded by `.gitignore` |
+| `.env.development` / `.env.production` | Depends | Committed when they hold no secrets, never committed when they do |
 
-`.gitignore` 写成 `.env*` 再加一行 `!.env.example`，只排除 `.env.local` 会漏掉按环境拆分的那些。
+Write `.gitignore` as `.env*` followed by `!.env.example`; excluding only `.env.local` misses the per-environment files.
 
-## 前缀对照
+## Prefix reference
 
-变量能不能进客户端代码由前缀决定，各框架的前缀不同：
+Whether a variable can reach client code is decided by its prefix, and every framework uses a different one:
 
-| 框架 | 客户端可见前缀 | 其余变量 |
+| Framework | Client-visible prefix | Everything else |
 | --- | --- | --- |
-| Vite | `VITE_` | 只在 `vite.config` 和 Node 侧可见 |
-| Next.js | `NEXT_PUBLIC_` | 只在服务端和构建期可见 |
-| Nuxt | `NUXT_PUBLIC_` 或 `runtimeConfig.public` | 只在服务端可见 |
-| Astro | `PUBLIC_` | 只在服务端可见 |
-| Vue CLI | `VUE_APP_` | 只在构建期可见 |
-| 小程序 / Taro / uni-app | 按平台约定的编译期注入 | 打包产物可被反编译，敏感值不要放前端 |
+| Vite | `VITE_` | Visible only in `vite.config` and on the Node side |
+| Next.js | `NEXT_PUBLIC_` | Visible only on the server and at build time |
+| Nuxt | `NUXT_PUBLIC_`, or `runtimeConfig.public` | Visible only on the server |
+| Astro | `PUBLIC_` | Visible only on the server |
+| Vue CLI | `VUE_APP_` | Visible at build time only |
+| Mini program, Taro, uni-app | Injected at compile time per platform convention | A bundle can be decompiled, so no sensitive values in the frontend |
 
-密钥、内部地址、带签名的 URL 一律不加前缀，即使构建能通过。
+Secrets, internal addresses and signed URLs take no prefix, even when the build would accept them.
 
-## 类型声明
+## Type declarations
 
-TS 项目里 `import.meta.env.X` 和 `process.env.X` 默认是 `any`，声明之后拼错变量名会被拦住：
+In a TS project `import.meta.env.X` and `process.env.X` are `any` by default, and declaring them catches a misspelled variable name:
 
 ```ts
 // src/env.d.ts
@@ -39,11 +39,11 @@ interface ImportMetaEnv {
 }
 ```
 
-Node 侧读 `process.env` 的项目加 `@types/node`，并在 `tsconfig.json` 的 `types` 里声明。声明文件要进 `tsconfig` 的 `include`，否则编辑器不认。
+A project reading `process.env` on the Node side adds `@types/node` and declares it in `types` inside `tsconfig.json`. The declaration file has to be inside the `include` of the tsconfig, or the editor ignores it.
 
-## 检查清单
+## Checklist
 
-- 代码里读到的每个变量都在 `.env.example` 里有一条，注释写清用途和取值。
-- `.env.example` 里没有真实值、真实域名、真实 token。
-- 含密钥的 `.env.production` 这类文件一律不提交；CI 与部署平台从 secret 注入，写法见 [ci.md](ci.md)。
-- 客户端变量一旦泄露就等于公开，改值要重新构建。
+- Every variable the code reads has an entry in `.env.example`, with a comment stating its purpose and its values.
+- `.env.example` holds no real values, real domains or real tokens.
+- A file such as `.env.production` holding secrets is never committed; CI and the deployment platform inject from their secret store, as covered in [ci.md](ci.md).
+- A client variable is public the moment it ships, and changing one means rebuilding.

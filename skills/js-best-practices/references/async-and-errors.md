@@ -1,17 +1,17 @@
-# 异步与错误
+# Async work and errors
 
-管 `async` / `await`、并发、失败与收尾。函数形态见 [functions-and-classes.md](functions-and-classes.md)，控制流见 [control-flow-and-values.md](control-flow-and-values.md)。
+Covers `async` / `await`, concurrency, failure and finishing work. Function form is in [functions-and-classes.md](functions-and-classes.md), control flow in [control-flow-and-values.md](control-flow-and-values.md).
 
 ## async / await
 
-- `async` / `await` 写正常流程，不写长 `.then()` 链；失败和收尾接在 promise 上。
-- 独立请求一起发用 `Promise.all`；一部分失败也要全部结果用 `Promise.allSettled`；只要第一个成功用 `Promise.any`（全失败抛 `AggregateError`）。
-- 有依赖才串行 `await`；并发数量不可控时切批次或加信号量，不无上限地 `Promise.all`。
-- 取消接 `AbortSignal`，条件变化或组件卸载时主动 `abort()`；超时用 `AbortSignal.timeout(ms)`，多个信号合并用 `AbortSignal.any([...])`。
-- 事件回调里不写 `async` 函数，抛出的错没人接得住；回调里调用了返回 promise 的函数就立刻挂 `.catch()`。
+- `async` / `await` carries the normal flow rather than a long `.then()` chain; failure and finishing attach to the promise.
+- Independent requests go out together with `Promise.all`; when a partial failure still needs every result, use `Promise.allSettled`; when only the first success matters, use `Promise.any`, which throws an `AggregateError` if all fail.
+- Dependencies are what make `await`s sequential; when concurrency would be unbounded, batch the work or add a semaphore instead of calling `Promise.all` over everything.
+- Cancellation attaches to an `AbortSignal`, calling `abort()` when the condition changes or a component unmounts; a timeout uses `AbortSignal.timeout(ms)`, and several signals combine through `AbortSignal.any([...])`.
+- Never write an `async` function as the callback of an event handler, because nothing can catch what it throws; when a callback calls a function returning a promise, attach `.catch()` immediately.
 
 ```js
-// ✗ 循环里逐个 await，N 个请求排成 N 次往返
+// Wrong: awaiting inside the loop turns N requests into N round trips.
 const loadProfiles = async (ids) => {
   const profiles = [];
   for (const id of ids) {
@@ -20,7 +20,7 @@ const loadProfiles = async (ids) => {
   return profiles;
 };
 
-// ✓ 一批一起发，结果按批次顺序收
+// Right: each batch goes out together, and results keep the batch order.
 const loadProfiles = async (ids, { batchSize = 10 } = {}) => {
   const profiles = [];
   for (const batch of chunk(ids, batchSize)) {
@@ -30,15 +30,15 @@ const loadProfiles = async (ids, { batchSize = 10 } = {}) => {
 };
 ```
 
-## 抛错与记录
+## Throwing and logging
 
-- 抛 `Error` 实例，不抛字符串：字符串没有堆栈，也接不住类型判断。
-- 错误信息写清哪一步、什么输入，不带密钥、token、完整用户对象这类内部细节。
-- 包装保留原始错误用 `new Error(message, { cause: error })`，不把 `error.message` 拼进新字符串。
-- 一次抛多个错误用 `AggregateError`，调用方从 `error.errors` 逐个读回来。
-- 能处理就处理，处理不了往上抛；不要每层 `try` 一遍再原样 `throw`。
-- 预期内的业务失败用返回值表达（`{ ok: false, reason: "not-found" }`），异常只留给意外。
-- `finally` 只放一定要执行的清理，不改业务结果。
+- Throw `Error` instances, not strings: a string carries no stack and no type to check.
+- An error message states which step and which input, without internal detail such as keys, tokens or a whole user object.
+- Keep the original error when wrapping, with `new Error(message, { cause: error })` rather than concatenating `error.message` into a new string.
+- Several errors at once go into an `AggregateError`, and the caller reads them back from `error.errors`.
+- Handle what can be handled and rethrow what cannot; do not wrap every layer in `try` only to `throw` the same thing again.
+- An expected business failure comes back as a return value (`{ ok: false, reason: "not-found" }`) and exceptions are left for the unexpected.
+- `finally` holds cleanup that must run, and does not change the business result.
 
 ```js
 const loadOrders = (id) =>
@@ -48,37 +48,38 @@ const loadOrders = (id) =>
   });
 ```
 
-## 失败怎么接
+## How a failure is caught
 
-每个异步操作都要能回答两个问题：失败了做什么、不管成败都要做什么。默认接 `.catch()` / `.finally()`，`await` 只负责正常流程；多个 `await` 共用同一段失败处理、捕获后还要继续走后面几步、需要在 `catch` 里重新抛给上层时才用 `try` / `catch`。
+Every async operation answers two questions: what happens on failure, and what happens either way. By default that means `.catch()` / `.finally()` while `await` carries the normal flow; `try` / `catch` comes in when several `await`s share one failure handler, when execution continues after a catch, or when the catch rethrows to a caller further out.
 
-- `try` 圈得太大，同一个函数里其他语句的意外错误会被当成预期失败处理掉，真正的 bug 连堆栈都对不上。
-- 失败分支按业务定：回滚乐观更新、状态改回可重试、给用户提示、上报日志；只 `console.log` 后继续走等于没处理。
-- 收尾放 `finally`：loading / 提交中复位、锁和连接释放、临时资源清理；取消和超时也走这条路径，否则状态卡在 loading。
-- `.finally()` 只做收尾，接不到错误；不等结果的调用照样要挂 `.catch()`。
-- 每个 promise 都要有归属：浮着的 promise 出错就是未处理拒绝——Node 默认直接终止进程，浏览器里没人拿得到。
+- A `try` that is too wide turns an unexpected error elsewhere in the function into a handled failure, and the real bug no longer matches its stack.
+- The failure branch follows the business: roll back an optimistic update, return the state to something retryable, tell the user, report to logging. A `console.log` followed by carrying on is not handling.
+- Finishing work goes in `finally`: clearing loading or a submitting flag, releasing locks and connections, cleaning up temporary resources. Cancellation and timeouts take that path too, or the state stays stuck on loading.
+- `.finally()` only finishes; it catches nothing, and a call whose result is not awaited still needs `.catch()`.
+- Every promise has an owner: a floating promise that fails becomes an unhandled rejection, which ends a Node process by default and reaches nobody in a browser.
 
 ```js
-// ✗ 失败没人管，loading 永远停不下来
+// Wrong: nothing handles a failure, and loading never stops.
 const submit = async () => {
   setLoading(true);
   await saveOrder(order);
   setLoading(false);
 };
 
-// ✓ 默认写法：await 走正常流程，失败和收尾接在 promise 上
+// Right: await carries the normal flow while failure and finishing attach to the promise.
 const submit = async () => {
   setLoading(true);
   await saveOrder(order)
     .catch((error) => {
       rollbackOrder(order.id);
-      setError("保存失败，请重试");
+      setError("Save failed, please retry");
       logger.error("saveOrder failed", { orderId: order.id, error });
     })
     .finally(() => setLoading(false));
 };
 
-// ✓ 两个 await 共用同一段失败处理时，才用 try，范围只圈这两行
+// Right: try comes in only when two awaits share one failure handler, and it
+// wraps exactly those two lines.
 const submit = async () => {
   setLoading(true);
   try {
@@ -95,17 +96,19 @@ const submit = async () => {
 };
 ```
 
-## 案例：预期内的失败用返回值
+## Case: an expected failure as a return value
 
 ```js
-// ✗ 业务失败抛异常，调用方靠 catch 猜是哪一种
+// Wrong: a business failure thrown as an exception, leaving the caller to guess
+// which kind it was from a catch.
 const findUser = async (id) => {
   const user = await db.findUser(id);
   if (!user) throw new Error("not-found");
   return user;
 };
 
-// ✓ 失败是正常返回值，调用方判过 ok 才能取 user
+// Right: the failure is an ordinary return value, and the caller checks ok
+// before reaching for user.
 const findUser = async (id) => {
   const user = await db.findUser(id);
   return user ? { ok: true, user } : { ok: false, reason: "not-found" };

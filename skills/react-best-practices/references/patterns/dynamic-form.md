@@ -1,25 +1,25 @@
-# 业务模式：动态表单
+# Case: dynamic forms
 
-适用：字段按类型、配置、权限或前置选择动态显示的表单。
+Applies to forms whose fields appear according to type, configuration, permissions or an earlier choice.
 
-## 先区分三类东西
+## Separate three things first
 
-- **字段定义**：字段名、类型、标签、选项来源和校验约束。
-- **表单值**：用户当前填写的数据，是表单状态的事实来源。
-- **展示规则**：字段何时显示、禁用或必填。
+- **Field definition**: name, type, label, option source and validation constraints.
+- **Form values**: what the user has filled in, which is the source of truth for form state.
+- **Display rules**: when a field shows, disables or becomes required.
 
-不要把字段配置、表单值、校验结果和 UI 展开状态揉成一个万能 State。
+Do not fold field configuration, form values, validation results and UI expansion into one all-purpose state object.
 
-## 推荐决策
+## Recommended decisions
 
-1. 优先复用项目已有表单库和 Schema 校验方案，不自建完整表单引擎。
-2. 字段类型有限且行为不同，用判别式联合表达；不要用大量可选字段组合出非法配置。
-3. 从当前表单值和权限计算字段的显示、禁用和必填状态。
-4. 字段依赖更新应明确清理策略：隐藏字段的值是保留、清空还是提交时剔除，属于业务规则。
-5. 服务端返回的初始值需要校验；异步初始化、重置和编辑已有记录要区分语义。
-6. 错误信息与字段关联；提交时同时处理字段错误、全局业务错误和网络错误。
+1. Reuse the project's existing form library and schema validation rather than building a form engine.
+2. A limited set of field types with different behavior is expressed as a discriminated union; do not combine many optional fields into configurations that can be illegal.
+3. Compute whether a field shows, disables or is required from the current values and permissions.
+4. A field dependency has an explicit cleanup policy: whether a hidden field's value is kept, cleared or dropped at submit time is a business rule.
+5. Initial values coming from the server need validation, and async initialization, a reset and editing an existing record are different things.
+6. Errors are tied to fields, and submit handles field errors, global business errors and network errors together.
 
-## 类型示意
+## A type sketch
 
 ```tsx
 type FieldDefinition =
@@ -28,16 +28,16 @@ type FieldDefinition =
   | { type: "date"; name: string; label: string; required?: boolean };
 ```
 
-使用判别式联合后，渲染时可按 `field.type` 分支，TypeScript 能帮助检查各类字段需要的配置。
+With a discriminated union, rendering branches on `field.type` and TypeScript checks the configuration each kind of field needs.
 
-## 常见误区
+## Common mistakes
 
-- 一个组件里堆大量 `if/else`，同时管理字段配置、值、校验、请求和布局。
-- 使用 `any` 保存所有字段，失去字段类型约束。
-- 字段隐藏后值是否提交没有明确规则。
-- 每个字段都单独创建一组重复 State。
-- 为一个页面的少量动态字段先建设通用表单设计器。
+- One component holding a pile of `if/else` that manages configuration, values, validation, requests and layout at once.
+- `any` for every field, which throws away the type constraints.
+- No rule for whether a hidden field's value still submits.
+- A separate set of duplicated state for every field.
+- Building a general form designer before a page has more than a few dynamic fields.
 
-## 适用边界
+## Where this stops applying
 
-简单固定表单无需动态 Schema。只有字段类型、依赖关系或配置确实复杂且有复用需求时，才提升为配置驱动；业务差异过大时，显式组件分支可能更清晰。
+A simple fixed form needs no dynamic schema. Configuration-driven fields earn their place only when types, dependencies or configuration are genuinely complex and reused; when the business differences are large, explicit component branches may read more clearly.

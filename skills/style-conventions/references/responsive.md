@@ -1,15 +1,15 @@
-# 响应式与断点
+# Responsive and breakpoints
 
-判据：窄屏、宽屏各看一次就能判断对不对，不用逐像素试中间档位。
+The test: one look at a narrow screen and one at a wide screen is enough to judge it, without probing every step in between.
 
-## 断点沿用现有的
+## Breakpoints follow the existing ones
 
-把仓库里已用的宽度抄下来，新组件只用这几档，方向也跟着现有代码统一（都写 `width >= 640px`，或都从大到小）。两个方向混用会留下没人测得到的空档。确实要加档时按「先探测现有约定」问一次，答案记进 `skill-memory/style-conventions.md`。
+Copy the widths the repository already uses, keep new components to those steps, and match the direction existing code takes, either all `width >= 640px` or all descending. Mixing directions leaves gaps nobody tests. A genuinely new step follows the probe in the main file, asked once, with the answer recorded in `skill-memory/style-conventions.md`.
 
-## 组件优先按容器响应
+## Components respond to their container first
 
 ```css
-/* ✓ 组件只看自己的宽度，放进侧栏、抽屉都不用改 */
+/* Right: the component looks only at its own width, so a sidebar or a drawer needs no change */
 .panel { container-type: inline-size; }
 
 @container (width < 420px) {
@@ -17,30 +17,31 @@
 }
 ```
 
-组件会被放进不同宽度的容器时用容器查询；页面级栅格才用视口断点。
+A component that lands in containers of different widths uses container queries; viewport breakpoints are for the page-level grid.
 
-## 断点控制在三档以内
+## Keep breakpoints within three steps
 
 ```css
 @media (width >= 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (width >= 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
 ```
 
-超过三档说明在用断点逐像素调版面，改用 `repeat(auto-fit, minmax(...))`、`flex-wrap` 或 `clamp()`。加一档之前先自查：是不是把某处固定宽度写死了。
+Past three steps the layout is being tuned pixel by pixel, and `repeat(auto-fit, minmax(...))`, `flex-wrap` or `clamp()` is the answer instead. Before adding a step, check whether some fixed width is the real cause.
 
-## 流式尺寸顶掉中间档
+## Fluid sizes replace the steps in between
 
 ```css
 .title { font-size: clamp(1.125rem, 1rem + 1vw, 1.5rem); }
 .section { padding-inline: clamp(var(--space-4), 5vw, var(--space-8)); }
 ```
 
-`clamp()` 的中值是过渡量，上限下限必须是 token 里的取值。
+The middle value in `clamp()` is the transition, and both ends must come from tokens.
 
-## 一个组件从窄到宽
+## One component from narrow to wide
 
 ```css
-/* ✓ 卡片在窄容器里竖排、宽容器里两列，中间档位交给流式尺寸 */
+/* Right: the card stacks in a narrow container and splits into two columns in a
+   wide one, with fluid sizes covering the steps in between */
 .card {
   container-type: inline-size;
   display: grid;
@@ -58,8 +59,8 @@
 .cardTitle { font-size: clamp(1rem, 0.9rem + 0.6vw, 1.25rem); }
 ```
 
-从窄到宽只改了列数，字号和内边距全程连续变化，中间没有额外断点。
+Going from narrow to wide changes only the column count, while the type size and padding vary continuously, with no extra breakpoint in between.
 
-## 收尾
+## Finishing
 
-在 320px 与 1440px 各看一次，再把浏览器字号调到 125% 看一次。
+Look once at 320px and once at 1440px, then bump the browser font size to 125% and look again.

@@ -1,30 +1,34 @@
 /** @type {import("prettier").Config} */
 export default {
-  // 行宽：100 比默认 80 少折几行，中文注释和类型定义更好读
+  // Line width: 100 wraps a little less than the default 80 and reads better
+  // with long type definitions
   printWidth: 100,
-  // 多行结构末尾补逗号，增删一行不会牵动上一行
+  // Trailing commas in multi-line structures, so adding or removing a line does
+  // not touch the one before it
   trailingComma: "all",
-  // 缩进用 2 个空格；改用制表符时把这两行一起改
+  // Two spaces for indentation; switching to tabs means changing both lines
   tabWidth: 2,
   useTabs: false,
-  // 语句保留分号
+  // Statements keep their semicolons
   semi: true,
-  // JS / TS 字符串用双引号
+  // JS and TS strings use double quotes
   singleQuote: false,
-  // 对象属性只在语法需要时加引号
+  // Object properties are quoted only where the syntax needs it
   quoteProps: "as-needed",
-  // JSX 属性和 JS 字符串一样用双引号，全仓库只有一套引号规则
+  // JSX attributes use double quotes like JS strings, leaving one quote rule
+  // across the repository
   jsxSingleQuote: false,
-  // 只有一个参数的箭头函数也带括号，后续加参数不用改写法
+  // A single-parameter arrow function keeps its parentheses, so adding a second
+  // parameter changes nothing
   arrowParens: "always",
-  // 对象字面量花括号内侧留空格：{ foo }
+  // Spaces inside object literal braces: { foo }
   bracketSpacing: true,
-  // 多行元素的右尖括号换到单独一行
+  // The closing angle bracket of a multi-line element goes on its own line
   bracketSameLine: false,
-  // 统一换行符，避免 Windows 和 Linux 贡献者互相产生整文件 diff
+  // One line ending, so Windows and Linux contributors do not create whole-file diffs
   endOfLine: "lf",
-  // Markdown 保持原有换行，不重排段落
+  // Markdown keeps its own line breaks rather than reflowing paragraphs
   proseWrap: "preserve",
-  // HTML 空白按 CSS 的 display 默认处理，vue 模板同理
+  // HTML whitespace follows the CSS display default, and Vue templates with it
   htmlWhitespaceSensitivity: "css",
 };

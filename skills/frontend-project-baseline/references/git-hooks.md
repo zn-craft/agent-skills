@@ -1,38 +1,38 @@
-# 提交门禁与 git hooks
+# Commit gates and git hooks
 
-钩子负责在本地拦住"改了但没检查"，让人少推一次失败；保证正确性归 CI。把全量检查塞进 pre-commit，结果是每次提交等一分钟，最后所有人 `--no-verify`。
+A hook stops locally what was changed without being checked, saving one failed push; correctness is CI's job. Piling full checks into pre-commit means a minute of waiting per commit and ends with everyone using `--no-verify`.
 
-## 哪个钩子放什么
+## What goes in which hook
 
-| 钩子 | 放什么 | 时长预期 |
+| Hook | What it holds | Expected duration |
 | --- | --- | --- |
-| `pre-commit` | 暂存文件的格式化与 lint 自动修复 | 秒级 |
-| `commit-msg` | 校验提交信息格式 | 毫秒级 |
-| `pre-push`（可选） | 类型检查、受影响的单测 | 十秒到一分钟 |
+| `pre-commit` | Formatting and lint autofix for staged files | Seconds |
+| `commit-msg` | Commit message format | Milliseconds |
+| `pre-push` (optional) | Type checking, affected unit tests | Tens of seconds to a minute |
 
-全量测试、全量构建、全量 lint、e2e 归 CI。
+The full test suite, the full build, the full lint and end-to-end tests belong to CI.
 
-## 工具
+## Tools
 
-| 工具 | 适合 |
+| Tool | Fits |
 | --- | --- |
-| husky + lint-staged | 默认，生态最熟，换人成本最低 |
-| lefthook | 要速度、要并行跑钩子 |
-| simple-git-hooks | 只要一两个钩子，配置写在 `package.json` |
+| husky with lint-staged | The default: the best-known ecosystem and the cheapest to hand over |
+| lefthook | Needing speed, and hooks running in parallel |
+| simple-git-hooks | Only one or two hooks, with the config living in `package.json` |
 
-仓库已有其中之一就沿用，不要在补齐基线时顺便换工具。
+Any one of them already in the repository stays; completing the baseline is not the moment to switch.
 
-## husky 要点
+## husky specifics
 
-- 用 `husky init` 生成 `.husky/` 并提交，新克隆的人装依赖后自动生效。
-- `prepare` 里含 husky 初始化，CI 安装依赖时也会跑到它，必要时设 `HUSKY=0`。
-- 钩子文件不写业务逻辑，命令直接引用 `package.json` 的 script，保证本地和 CI 一致。
-- `lint-staged` 按文件类型分组，命令与 `lint:fix`、`stylelint:fix` 保持一致。
+- `husky init` generates `.husky/`, which is committed, and it takes effect for a fresh clone once dependencies are installed.
+- `prepare` includes the husky initialization, so an install in CI runs it too; set `HUSKY=0` where that matters.
+- A hook file carries no business logic and calls the `package.json` script directly, keeping local and CI identical.
+- `lint-staged` groups by file type, with commands matching `lint:fix` and `stylelint:fix`.
 
-## 提交信息
+## Commit messages
 
-格式 `<type>(<scope>): <subject>`，scope 用模块名。类型限定为 `feat`、`fix`、`refactor`、`perf`、`docs`、`test`、`build`、`ci`、`chore`、`revert`。
+The format is `<type>(<scope>): <subject>`, with the module name as the scope. Types are limited to `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build`, `ci`, `chore` and `revert`.
 
-需要自动生成 changelog 或自动决定版本号时用 commitlint 严格校验，否则只校验类型前缀。合并提交、回滚提交、依赖机器人要么放行要么豁免。
+commitlint checks strictly when a changelog or an automatic version bump depends on it; otherwise only the type prefix is checked. Merge commits, revert commits and dependency bots are either let through or exempted.
 
-钩子里的自动修复会改动工作区文件，提交前确认这次改动只包含本次工作。`--no-verify` 是逃生口，不是日常路径。
+Autofix inside a hook changes working-tree files, so confirm before committing that the change contains only this piece of work. `--no-verify` is an escape hatch, not the usual path.

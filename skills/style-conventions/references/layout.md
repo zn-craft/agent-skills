@@ -1,60 +1,61 @@
-# 布局与间距
+# Layout and spacing
 
-判据：把内容换成两倍长、条目换成三分之一，排版还在原位。
+The test: double the content and cut the items to a third, and the layout stays where it was.
 
-## 一维用 flex，二维用 grid
+## flex for one dimension, grid for two
 
 ```css
-/* ✓ 间距交给父容器的 gap */
+/* Right: the parent container owns the spacing through gap */
 .toolbar { display: flex; align-items: center; gap: var(--space-2); }
 
-/* ✓ 列宽跟着容器走，不写死几列 */
+/* Right: column width follows the container instead of a hard-coded count */
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-4); }
 ```
 
-要二维网格、等分与对齐都用 grid；`float` 加外边距拼版面已经不必要。
+Use grid for a two-dimensional layout and for even division and alignment; assembling a page from `float` plus margins is no longer needed.
 
-## 间距写在父容器
+## Spacing belongs to the parent container
 
 ```css
-/* ✗ 靠子元素外边距拼间距：最后一项多出一截，换行后对不齐 */
+/* Wrong: spacing stitched from child margins, leaving a trailing gap that
+   misaligns once items wrap */
 .toolbar > button { margin-right: 8px; }
 
-/* ✓ 父容器一次说完，增删子元素都不影响间距 */
+/* Right: the parent states it once, and adding or removing children changes nothing */
 .toolbar { gap: var(--space-2); }
 ```
 
-只有要和兄弟元素分离（段落之间的垂直节奏）才在自身写 `margin`。
+Write `margin` on the element itself only to separate it from a sibling, such as the vertical rhythm between paragraphs.
 
-## 方向相关的值用逻辑属性
+## Direction-aware values use logical properties
 
 ```css
-/* ✗ 写死左右，阿拉伯语与希伯来语环境整页镜像不过来 */
+/* Wrong: hard-coded left and right, so Arabic and Hebrew cannot mirror the page */
 .alert { padding-left: var(--space-4); border-left: 3px solid var(--color-warning); }
 
-/* ✓ 跟着 dir 走，同一份代码在两种书写方向下都对 */
+/* Right: follows dir, so one implementation holds in both writing directions */
 .alert { padding-inline-start: var(--space-4); border-inline-start: 3px solid var(--color-warning); }
 ```
 
-间距、描边、定位一律用逻辑属性：`padding-inline`、`margin-block-end`、`inset-inline-start`。确实表达物理方向时才写 `left`、`right`（比如固定在边上的装饰），配上 `[dir="rtl"]` 覆盖。
+Spacing, borders and positioning always use logical properties: `padding-inline`, `margin-block-end`, `inset-inline-start`. A physical direction is written as `left` or `right` only when that is genuinely meant, such as a decoration pinned to one side, and then with a `[dir="rtl"]` override.
 
-## 尺寸留出余量
+## Leave room in the sizes
 
 ```css
-/* ✗ flex 子项按内容撑开，长文本把整行顶出去 */
+/* Wrong: a flex child sized by its content, and long text pushes the row out */
 .toolbarSearch { flex: 1; }
-/* ✓ 允许收缩，再让长词断行 */
+/* Right: allowed to shrink, and long words wrap */
 .toolbarSearch { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 
-/* ✗ 固定高度放文字，字号变大或文案变长就截断 */
+/* Wrong: a fixed height holding text truncates as soon as the font or copy grows */
 .cardTitle { height: 24px; }
-/* ✓ 下限兜底，上限交给内容 */
+/* Right: a floor to fall back on, with the ceiling left to the content */
 .cardTitle { min-height: 1.5em; }
 ```
 
-横向溢出先查 `min-width`，不要急着加 `overflow: hidden`；文字容器写 `min-height`，不写死 `height`。
+Horizontal overflow starts by checking `min-width` rather than reaching for `overflow: hidden`; a text container gets `min-height`, never a fixed `height`.
 
-## z-index 从 token 取
+## Take z-index from tokens
 
 ```css
 :root {
@@ -65,4 +66,4 @@
 }
 ```
 
-弹层按这套取值，不在组件里写 `9999`；出现新层级就加一档 token。
+Overlays take their values from this set instead of writing `9999` in a component, and a new layer adds one token.
