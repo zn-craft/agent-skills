@@ -1,0 +1,4 @@
+interface:
+  display_name: "React 最佳实践"
+  short_description: "帮助 AI 写出简洁、可靠、易维护的 React 代码"
+  default_prompt: "使用 $react-best-practices-zh，先检查当前 React 版本、渲染环境和项目约定；只读取当前任务相关的规则或业务模式，优先用简单、正确的方式完成任务，避免无关重构，并按项目现有脚本验证。"

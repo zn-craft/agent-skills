@@ -1,43 +1,43 @@
-# 控制流与值
+# Control flow and values
 
-管命名、分支结构、默认值与可选链，以及值怎么改。函数形态与类见 [functions-and-classes.md](functions-and-classes.md)，集合与属性见 [objects-and-collections.md](objects-and-collections.md)。
+Covers naming, branching, defaults and optional chaining, and how a value is changed. Function form and classes are in [functions-and-classes.md](functions-and-classes.md), collections and properties in [objects-and-collections.md](objects-and-collections.md).
 
-## 命名
+## Naming
 
-- 名字说清它是什么：`data`、`list`、`temp`、`res` 换个地方就失效，不用。
-- 布尔量用 `is` / `has` / `should` / `can` / `needs` 开头；函数名是动词短语（`fetchOrders`、`normalizePhone`），`process`、`handle` 这类空词不单独当名字。
-- 缩写只在团队通用时用：`id`、`url`、`api` 可以，`usr`、`cfg`、`btn` 不行。
-- 同一个值出现两处以上抽成命名常量，不留魔法数字。
+- A name says what the thing is: `data`, `list`, `temp` and `res` stop meaning anything once they move, so they are out.
+- Booleans start with `is` / `has` / `should` / `can` / `needs`; a function name is a verb phrase (`fetchOrders`, `normalizePhone`), and empty words like `process` or `handle` are never a name on their own.
+- Abbreviations only where the team shares them: `id`, `url` and `api` are fine, while `usr`, `cfg` and `btn` are not.
+- The same value in two or more places becomes a named constant; no magic numbers are left behind.
 
-## 分支
+## Branching
 
-- 先处理异常和边界，正常路径留在函数主体，嵌套自然就浅；嵌套超过 3 层拆函数，不按行数机械拆。
-- 复杂条件先算成命名布尔，让 `if` 读起来是一句话。
-- 不在条件里赋值，也不在条件里调用有副作用的函数。
-- `switch` 每个分支都有出口，`default` 要么抛错要么明确兜底；不靠穿透 `case` 省代码。
+- Handle the unusual cases and boundaries first and leave the normal path in the body, which keeps nesting shallow on its own; past three levels, extract a function rather than splitting by line count.
+- Compute a complex condition into a named boolean so the `if` reads as one sentence.
+- No assignment inside a condition, and no call with a side effect inside one.
+- Every `switch` branch exits, and `default` either throws or is a deliberate fallback; never save code by letting a `case` fall through.
 
-## 默认值与可选链
+## Defaults and optional chaining
 
-- 只有 `null` / `undefined` 要走默认值时用 `??`；`||` 会连 `0`、`""`、`false` 一起吞掉。
-- 可选链后面紧跟 `??` 给默认值，别让 `undefined` 一路传下去。
-- 取不到是正常情况才用可选链；取不到是 bug 就先判空或直接抛错，不用它掩盖。
+- Use `??` when only `null` and `undefined` should fall back; `||` also swallows `0`, `""` and `false`.
+- Pair optional chaining with `??` right away instead of letting `undefined` travel on.
+- Optional chaining is for the case where missing is normal; when missing is a bug, check for null or throw instead of masking it.
 
 ```js
 const pageSize = options.pageSize ?? 20;
-const ownerName = order.owner?.name ?? "未指定";
+const ownerName = order.owner?.name ?? "unassigned";
 ```
 
-## 值怎么改
+## Changing a value
 
-- 推结果用 `map` / `filter` / `find` / `some` / `every` 表达意图，不手写 `for` 加临时变量。
-- 要改一个字段就复制那一层（`{ ...order, status: "unpaid" }`），不共享引用。
+- Building a result uses `map` / `filter` / `find` / `some` / `every` to state the intent, rather than a hand-written `for` with a temporary variable.
+- Changing one field copies that one level (`{ ...order, status: "unpaid" }`) instead of sharing a reference.
 
-## 案例
+## Cases
 
-### 边界先走，正常路径留在主体
+### Boundaries first, normal path in the body
 
 ```js
-// ✗ 四个 if 套在一起，正常路径埋在最后一行
+// Wrong: four nested ifs, with the normal path buried on the last line.
 const getDiscount = (user, order) => {
   if (user) {
     if (user.isActive) {
@@ -49,7 +49,7 @@ const getDiscount = (user, order) => {
   return 0;
 };
 
-// ✓ 边界逐个返回，主流程一眼读完
+// Right: each boundary returns, and the main flow reads in one pass.
 const getDiscount = (user, order) => {
   if (!user?.isActive) return 0;
   if (order.items.length === 0) return 0;
@@ -57,10 +57,11 @@ const getDiscount = (user, order) => {
 };
 ```
 
-### 返回新值，不改调用方的数据
+### Return a new value and leave the caller's data alone
 
 ```js
-// ✗ 原地改传进来的数组和对象，调用方的状态跟着变
+// Wrong: mutating the array and objects that came in, so the caller's state
+// changes with it.
 const markUnpaid = (orders) => {
   for (const order of orders) {
     if (!order.paid) order.status = "unpaid";
@@ -68,7 +69,7 @@ const markUnpaid = (orders) => {
   return orders;
 };
 
-// ✓ map 返回新数组，命中项展开成新对象
+// Right: map returns a new array, and a matching item spreads into a new object.
 const markUnpaid = (orders) =>
   orders.map((order) =>
     order.paid ? order : { ...order, status: "unpaid" },

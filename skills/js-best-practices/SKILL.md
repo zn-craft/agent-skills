@@ -1,72 +1,72 @@
 ---
 name: js-best-practices
-description: JavaScript 语言层写法与结构决策：写、改或评审 JS/TS 代码时使用。规定命名、函数形态（默认箭头函数）、控制流与值处理、集合用法（数字与日期、字符串与克隆）、异步写法、错误处理，以及类与继承、循环与缓存的取舍。不负责 TypeScript 类型建模、模块目录与框架组件、注释和构建 / lint 配置。
+description: JavaScript language-level style and structure decisions: use when writing, changing or reviewing JS/TS code. Covers naming, function form, control flow, collections, async style and error handling, plus the tradeoffs in classes, inheritance, loops and caching. Does not cover TypeScript type modeling, module layout, framework components or build and lint config.
 ---
 
-# JavaScript 最佳实践
+# JavaScript best practices
 
-这些判据是从项目里收的，不是风格偏好：每条都说清什么情况这么做、什么信号说明写坏了、怎么改。本文只回答语言层写法，类型建模、组件渲染、样式、注释和目录归属不在范围内，按对应规范处理。
+These rules come from real projects rather than style preference: each one says when it applies, what signal shows the code went wrong, and how to fix it. This file answers language-level questions only; type modeling, component rendering, styling, comments and where files belong follow their own conventions.
 
-规则以现代运行时（ES2023 起）为前提；要跑更老的运行时先确认 API 是否可用，运行时或构建目标升级时回头复核一遍。
+The rules assume a modern runtime (ES2023 and later). Before targeting something older, confirm the APIs exist, and re-check when the runtime or build target moves.
 
-## 优先级
+## Priority
 
-同一个决定被多处规范同时覆盖时，按这个顺序裁决，前者压后者：
+When one decision is covered by several conventions, decide in this order, earlier wins:
 
-1. 用户的明确要求。
-2. 工程现状：lint 已开的规则、目录里已有的同类写法、项目已经在用的库和工具函数。
-3. 本文的默认值。
+1. What the user explicitly asked for.
+2. The state of the project: lint rules already enabled, the way similar code in the directory is written, libraries and utilities already in use.
+3. The defaults in this file.
 
-和 lint 冲突时以 lint 为准；能改规则就改 lint 配置，不用 `eslint-disable` 掩盖写法问题。确有局部例外（生成代码、启动路径的日志）时逐行关掉并写明原因。下面「必须」档不允许偏离，「默认」档按上面的顺序裁决。
+Where a rule conflicts with lint, lint wins; change the lint config rather than hiding a writing problem behind `eslint-disable`. For a genuine local exception (generated code, logging on a startup path), disable it line by line with the reason next to it. Nothing under "Required" below may be deviated from; the "Default" section is decided by the order above.
 
-项目里已有的库或工具函数能做的事就别用内置 API 再实现一遍（日期、小数金额、深拷贝最容易出现两套做法）；用的时候按需导入（命名导入或子路径），不整包默认导入；项目没装过的库不为一件小事新引。
+Do not reimplement with built-ins what a library or utility in the project already does — dates, decimal money and deep copies are where a second implementation shows up most. Import on demand, through named imports or subpaths, instead of a whole-package default import, and do not add a library the project does not already have for a small task.
 
-## 必须
+## Required
 
-- 能不变就 `const`，确实要重新赋值才用 `let`；`var` 不用。
-- 一律 `===` / `!==`；只有 `x == null` 例外，一次判掉 `null` 和 `undefined`。
-- 入参不原地改；能给调用方返回新值，就不改传进来的对象和数组。函数契约本来就是原地改时才直接改，并把这件事写进名字。
-- 抛 `Error` 实例，不抛字符串。
-- 错误不吞：捕获后记录或往上抛，空 `catch` 不出现。
-- 每个 promise 都要被 `await`、返回或显式接住；异步操作必须有失败分支和收尾（失败了做什么、不管成败做什么），一件都不能省。
-- `try` 块只圈住会失败的那几行，不把整个函数体包进去。
+- `const` unless reassignment is genuinely needed, then `let`; never `var`.
+- `===` / `!==` throughout; the one exception is `x == null`, which covers both `null` and `undefined` in one check.
+- Do not mutate arguments in place; when a new value can be returned to the caller, do not change the object or array that came in. A function only mutates in place when that is its point, and then the name says so.
+- Throw `Error` instances, never strings.
+- No swallowed errors: a catch logs or rethrows, and an empty `catch` never appears.
+- Every promise is awaited, returned or explicitly caught; an async operation has a failure branch and a finishing step, and neither is left out.
+- A `try` block wraps only the lines that can fail, not the whole function body.
 
-## 默认
+## Default
 
-- 函数写箭头；类的方法、需要动态 `this`（含显式 `this` 参数）、生成器、构造函数、依赖声明提升时才写 `function`。
-- 名字说明业务含义，不用 `data`、`temp`、`handleClick2` 这类名字；布尔量用 `is` / `has` / `should` / `can` 开头。
-- 用提前返回压掉嵌套；复杂条件先算成命名布尔，不在条件里塞副作用。
-- 改集合前先看数据是谁的：自己造的临时数组原地 `sort` / `push`；来自参数、state、store 或缓存的先复制或用 `toSorted` / `toReversed`。
-- 数字、字符串、日期的精度和时区先看项目已有的库或工具函数，没有再按 [values-and-numbers.md](references/values-and-numbers.md) 的判据处理，不在业务代码里现推。
-- 异步流程用 `async` / `await`，独立操作用 `Promise.all`；失败和收尾默认接 `.catch()` / `.finally()`，多个 `await` 共用一段处理、或捕获后还要往下走时才用 `try` / `catch`。
-- 失败分支按业务走：回滚乐观更新、把状态改回可重试、记日志；`finally` 放收尾（loading 复位、锁释放），取消和超时走同一条路径。
-- 能处理的业务失败用返回值表达，异常只留给意外；返回结构的形状跟项目已有约定走，同一个工程只保留一种。
-- 继承只表达「是一个」；单纯复用代码用组合，父类不判断自己有哪些子类。
+- Functions are arrow functions; `function` is for class methods, anything needing a dynamic `this` including an explicit `this` parameter, generators, constructors and hoisting by declaration.
+- A name states the business meaning; `data`, `temp` and `handleClick2` are out, and booleans start with `is` / `has` / `should` / `can`.
+- Early returns flatten nesting; a complex condition is computed into a named boolean, and no side effect hides inside a condition.
+- Before changing a collection, see whose data it is: a temporary array you built is sorted or pushed in place, while one coming from arguments, state, a store or a cache is copied first or handled with `toSorted` / `toReversed`.
+- For numbers, strings and dates, look for the project's library or utility first; without one, follow [values-and-numbers.md](references/values-and-numbers.md) rather than improvising inside business code.
+- Async flows use `async` / `await`, and independent work runs through `Promise.all`; failure and finishing attach with `.catch()` / `.finally()` by default, and `try` / `catch` is for several `await`s sharing one handler or for carrying on after a catch.
+- A failure branch follows the business: roll back an optimistic update, return the state to something retryable, write a log entry; `finally` holds the finishing work, and cancellation and timeouts take the same path.
+- A business failure that can be handled comes back as a return value and exceptions are left for the unexpected; that return follows the project's existing convention, and one project keeps one shape.
+- Inheritance expresses "is a"; code reuse alone uses composition, and a parent class never asks which subclasses it has.
 
-## 默认档的例外
+## Exceptions to the defaults
 
-- 性能：以测量结果为准。热点多半是循环里反复查找、同一份数据算好几趟、只判有无却走完整趟，处理方式见 [performance.md](references/performance.md)。
-- 相邻代码的一致性：就地修改的存量函数跟着周围写法走，不顺手重写。
-- 第三方接口的形状：对方只收回调式 API，或参数顺序另有约定。
+- Performance: measurement decides. A hot spot is usually a repeated lookup inside a loop, the same data computed several times, or a full pass just to answer a yes-or-no question; see [performance.md](references/performance.md).
+- Consistency with neighbouring code: an existing in-place function keeps the style around it instead of being rewritten on the way past.
+- The shape of a third-party interface: the vendor only offers a callback API, or fixes the argument order.
 
-偏离时在代码附近写一句原因。
+Write one line of reasoning near the code whenever a default is left behind.
 
-## 按需读取
+## Read on demand
 
-先用上面的规则写，遇到具体问题再查对应文档。
+Write with the rules above first, and look up the matching document when a specific question comes up.
 
-| 任务 | 读取文件 |
+| Task | File |
 | --- | --- |
-| 函数形态、参数设计、类与继承 | [functions-and-classes.md](references/functions-and-classes.md) |
-| 命名、分支、默认值与可选链、值怎么改 | [control-flow-and-values.md](references/control-flow-and-values.md) |
-| 数字与日期精度、字符串处理、相等判断、深拷贝 | [values-and-numbers.md](references/values-and-numbers.md) |
-| 排序去重、属性存在性、`Map` 还是对象 | [objects-and-collections.md](references/objects-and-collections.md) |
-| 引入方式、整包导入与产物大小 | [imports.md](references/imports.md) |
-| 循环里反复查找、一趟算完、提前结束、缓存取舍 | [performance.md](references/performance.md) |
-| 并发、失败怎么接、收尾、抛错与记录 | [async-and-errors.md](references/async-and-errors.md) |
+| Function form, parameter design, classes and inheritance | [functions-and-classes.md](references/functions-and-classes.md) |
+| Naming, branching, defaults and optional chaining, changing a value | [control-flow-and-values.md](references/control-flow-and-values.md) |
+| Number and date precision, strings, equality, deep copies | [values-and-numbers.md](references/values-and-numbers.md) |
+| Sorting and de-duplication, property existence, `Map` or object | [objects-and-collections.md](references/objects-and-collections.md) |
+| How an import is written and what lands in the bundle | [imports.md](references/imports.md) |
+| Repeated lookups in a loop, one pass instead of several, finishing early, when caching pays | [performance.md](references/performance.md) |
+| Concurrency, catching failures, finishing work, throwing and logging | [async-and-errors.md](references/async-and-errors.md) |
 
-## 需要用户拍板时
+## When the user has to decide
 
-- 先读 `skill-memory/js-best-practices.md`，命中就照做、不再问。
-- 只在这类答案会影响多处代码时问；问完把结论和一句理由写进该文件，一行一条「结论 —— 一句理由」，不抄对话。
-- 其余按代码现状定：局部命名、单个函数的参数形态、某个 `try` 放哪一层。
+- Read `skill-memory/js-best-practices.md` first; a recorded answer is followed without asking again.
+- Ask only when the answer changes code in more than one place; afterwards write the conclusion and one line of reasoning into that file, one "decision — reason" per line, not the conversation.
+- Everything else follows the code as it is: local naming, the parameter shape of a single function, which layer a `try` belongs in.

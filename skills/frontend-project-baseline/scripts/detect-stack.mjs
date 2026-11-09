@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 /**
- * 探测前端项目已落地的工程化配置，输出文本或 JSON 报告。
+ * Inspect the engineering setup already in place in a frontend project and
+ * print a text or JSON report.
  *
- *   node detect-stack.mjs                       # 探测当前目录
- *   node detect-stack.mjs ./path/to/project     # 探测指定项目
- *   node detect-stack.mjs ./app --json          # 机器可读输出
+ *   node detect-stack.mjs                       # inspect the current directory
+ *   node detect-stack.mjs ./path/to/project     # inspect a given project
+ *   node detect-stack.mjs ./app --json          # machine-readable output
  *
- * 只读文件名、package.json 字段、tsconfig 开关、.nvmrc 和 workspace glob，
- * 不读 .env 内容，不写项目。工作区还会逐包检查名称、tsconfig 与命令。
+ * It only reads file names, package.json fields, tsconfig switches, .nvmrc and
+ * workspace globs: no .env contents, and nothing is written to the project. A
+ * workspace also checks each package's name, tsconfig and scripts.
  *
- * 本文件只做入口：解析参数、组装报告、选输出格式。
- * 探测细节见同目录的 detect-stack.*.mjs。零依赖，Node 18+。
- * 目标目录不可用时退出码为 2，其余情况为 0。
+ * This file is the entry point only: parse arguments, assemble the report,
+ * choose the output format. The detection detail lives in the sibling
+ * detect-stack.*.mjs files. Zero dependencies, Node 18+.
+ * Exit code is 2 when the target directory is unusable, 0 otherwise.
  */
 
 import { readdir, stat } from "node:fs/promises";
@@ -40,14 +43,14 @@ async function main() {
   const json = argv.includes("--json");
   const positional = argv.filter((arg) => !arg.startsWith("-"));
   if (argv.some((arg) => arg.startsWith("-") && arg !== "--json")) {
-    console.error("用法：node detect-stack.mjs [项目根目录] [--json]");
+    console.error("Usage: node detect-stack.mjs [project root] [--json]");
     process.exit(2);
   }
 
   const target = path.resolve(positional[0] ?? ".");
   const info = await stat(target).catch(() => null);
   if (!info || !info.isDirectory()) {
-    console.error(`目录不存在：${target}`);
+    console.error(`Directory does not exist: ${target}`);
     process.exit(2);
   }
 
@@ -87,7 +90,7 @@ async function main() {
     return;
   }
   if (!report.hasPackageJson) {
-    console.log(`提示：${report.target} 下没有 package.json，结果可能不完整。\n`);
+    console.log(`Note: no package.json under ${report.target}; the report may be incomplete.\n`);
   }
   console.log(renderMarkdown(report));
 }

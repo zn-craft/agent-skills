@@ -1,33 +1,33 @@
-# 小程序
+# Mini programs
 
-## 原生微信小程序
+## Native WeChat mini programs
 
 ```text
-pages/userCard/            # 组件放 components/userCard/
-├── index.ts               # 页面 / 组件逻辑
+pages/userCard/            # components live in components/userCard/
+├── index.ts               # page or component logic
 ├── index.wxml
 ├── index.wxss
-├── index.json             # 框架配置：usingComponents、component: true 等
-└── index.config.ts        # 业务常量、默认值
+├── index.json             # framework config: usingComponents, component: true and so on
+└── index.config.ts        # business constants and defaults
 ```
 
-- **`index.json` 是框架配置文件，不能拿来放数据**。原生小程序不能 import JSON 文件，业务数据写在 `index.ts` 或同名 `.ts` 里，不要放 `xx.data.json`。Taro / uni-app 走构建链，可以正常 import JSON。
-- 目录沿用框架的小驼峰约定（`userCard/`、`orderDetail/`），不要改成大驼峰，否则和 `app.json` 里的路由对不上。
-- 组件目录默认用框架要求的多文件结构，不要为了统一而改成 `userCard.ts` 单文件。
-- `.mock.ts` / `.type.ts` / `.test.ts` 的规则与 Web 侧一致，按需生成。
-- `pages/` 下的目录是路由入口，改目录名要同步 `app.json`。
+- **`index.json` is a framework configuration file and does not hold data.** A native mini program cannot import JSON, so business data is written in `index.ts` or a sibling `.ts` file, never in `xx.data.json`. Taro and uni-app go through a build chain and can import JSON normally.
+- Directories follow the framework's lowerCamelCase convention (`userCard/`, `orderDetail/`) instead of switching to UpperCamelCase, which would stop matching the routes in `app.json`.
+- A component directory keeps the multi-file structure the framework expects, rather than collapsing to a single `userCard.ts` for consistency.
+- `.mock.ts`, `.type.ts` and `.test.ts` follow the same rules as on the web side and appear as needed.
+- Directories under `pages/` are route entries, so renaming one means updating `app.json` in the same change.
 
 ## Taro
 
-- 用 React 规则：`index.tsx` 主逻辑，`index.config.ts` 是**页面 / 组件编译配置**（`navigationBarTitleText` 等）。
-- 因为 `xx.config.ts` 这个位置被框架占用，业务常量改用 `xx.const.ts`，避免两者混在一起。
+- The React rules apply: `index.tsx` holds the logic, and `index.config.ts` is the **page or component build configuration** (`navigationBarTitleText` and the like).
+- Because the framework occupies the `xx.config.ts` name, business constants move to `xx.const.ts` and the two are never mixed.
 
 ## uni-app
 
-- 用 Vue 规则，`pages.json` 管路由与窗口配置，组件目录结构与 Vue 一致。
-- 平台差异收敛到 `xx.config.ts` 或平台分支文件（`xx.weapp.ts` / `xx.h5.ts`），不要在主逻辑里散落 `#ifdef`。
+- The Vue rules apply, `pages.json` manages routing and window configuration, and component directories match the Vue layout.
+- Platform differences are gathered into `xx.config.ts` or per-platform files (`xx.weapp.ts`, `xx.h5.ts`) instead of `#ifdef` spread through the main logic.
 
-## 通用
+## Both kinds
 
-- 页面和组件是两类目录：页面负责路由与生命周期，组件负责展示。不要把可复用组件放在 `pages/` 下。
-- 小程序包体积敏感，能进主包的公共代码放 `utils/` / `components/`，只在少数场景用的代码按分包组织。
+- Pages and components are different directories: a page owns routing and lifecycle, a component owns presentation. A reusable component never lives under `pages/`.
+- Package size is precious in a mini program, so shared code that belongs in the main package goes to `utils/` and `components/`, while code only a few screens need is organized into subpackages.

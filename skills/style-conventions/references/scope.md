@@ -1,64 +1,64 @@
-# 作用域与命名
+# Scoping and naming
 
-判据：这段样式只可能在它所属的组件里生效。
+The test: this style can only take effect inside the component it belongs to.
 
-作用域按这个顺序取：`xxx.module.css`（CSS Modules）、SFC 的 `<style scoped>`、组件级 wxss、带作用域的 styled 组件，最后才是全局 CSS 加命名前缀。仓库用哪套就跟着哪套，不混用两套。
+Take scoping in this order: `xxx.module.css` (CSS Modules), an SFC's `<style scoped>`, component-level wxss, scoped styled components, and only then global CSS with a naming prefix. Whichever the repository uses is the one to follow, never two side by side.
 
 ```css
-/* ✗ 全局文件里的 .card，第二个页面沿用同名类就打架 */
+/* Wrong: .card in a global file, and the second page using the same class collides */
 .card { padding: 16px; }
 
-/* ✓ userCard 目录里的 userCard.module.css，只有这个组件用得到 */
+/* Right: userCard.module.css inside the userCard directory, reachable only by that component */
 .card { padding: var(--space-4); }
 ```
 
-## 类名说用途，不说外观
+## A class name says its purpose, not its look
 
 ```css
-/* ✗ 主题换成深色后，类名和它的值对不上 */
+/* Wrong: after the theme turns dark, the class name and its value disagree */
 .btn-blue { background: #1d4ed8; }
 
-/* ✓ 换配色不用改类名，也不用改引用处 */
+/* Right: a colour change touches neither the class name nor its references */
 .btnPrimary { background: var(--color-primary); }
 ```
 
-命名法跟着仓库既有风格：用了 BEM 就继续 `block__element--modifier`，用了小驼峰就继续小驼峰。
+Follow the repository's existing convention: `block__element--modifier` where BEM is in use, lowerCamelCase where that is.
 
-## 继承与组合优先于复制
+## Inherit and compose before copying
 
-子元素本来就继承的属性（字体、颜色、行高）不再写一遍，要改就改父级。
+Properties a child inherits anyway (font, colour, line height) are not written again; a change goes on the parent.
 
 ```css
-/* ✗ 每层重写一遍，换字体要跟着改三处 */
+/* Wrong: rewritten at every level, so a font change means editing three places */
 .card { font-family: var(--font-sans); color: var(--text); }
 .cardBody { font-family: var(--font-sans); color: var(--text); }
 .cardNote { font-family: var(--font-sans); color: var(--text); }
 
-/* ✓ 只写一次，子级继承；装饰跟着当前文字色走 */
+/* Right: written once and inherited; decoration follows the current text colour */
 .card { font-family: var(--font-sans); color: var(--text); }
 .cardIcon { color: currentColor; }
 ```
 
-整段规则要复用就用组合，不手抄：CSS Modules 用 `composes`，SCSS 用 `@extend %placeholder` 或 `@include`；原生 CSS 没有组合语法，把公共部分收进 `@layer utilities` 的类。
+Reuse a whole rule by composing rather than copying: `composes` in CSS Modules, `@extend %placeholder` or `@include` in SCSS, and in plain CSS the shared part becomes a class in `@layer utilities`.
 
-## 跨组件的通用类要少
+## Shared classes across components stay few
 
-一个类被两个以上组件引用，它就不再是组件样式：搬到全局层，用变量或基础类表达。
+Once two or more components reference a class it is no longer component styling: it moves to the global layer and is expressed as a variable or a base class.
 
-## 影响子组件要走显式出口
+## Reaching into a child component needs a published exit
 
 ```vue
 <style scoped>
-/* ✗ 后代选择器硬穿进子组件，子组件改结构就断 */
+/* Wrong: a descendant selector punches into the child, and the child's structure change breaks it */
 .dialog .title { font-size: 18px; }
 
-/* ✓ :deep() 只对明确要调的节点用 */
+/* Right: :deep() is used only on the node that genuinely has to change */
 .dialog :deep(.panelTitle) { font-size: var(--font-lg); }
 </style>
 ```
 
-子组件是样式的作用域边界。要在外部改它，先让它暴露变量或 prop，其次才是 `:deep()`，且只针对具体节点，不写 `.dialog *`。
+A child component is a scoping boundary for styles. Changing it from outside first means letting it expose a variable or a prop, and only then `:deep()`, aimed at a specific node rather than `.dialog *`.
 
-## 自检
+## Self-check
 
-把引用这处样式的页面列出来：只能说"这个组件用到了"就是对的，要说"所有用了这个类名的地方"就该拆。
+List the pages that reference this style. When the answer is "this component uses it", it is right; when it is "everything using this class name", it should be split.

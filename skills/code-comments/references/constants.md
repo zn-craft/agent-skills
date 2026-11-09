@@ -1,41 +1,41 @@
-# 常量与变量注释
+# Comments on constants and variables
 
-写常量、模块级配置值、枚举值、默认值，或遇到魔法值时读这份。
+Read this when writing a constant, a module-level config value, an enum value or a default, or when you meet a magic value.
 
-常量注释补的是**这个值从哪来、范围多少、什么时候能改**：单位、上下限、来源、取值理由、改动的后果。
+A constant comment carries **where the value comes from, what range it covers, and when it may change**: unit, bounds, origin, the reasoning behind the value, and what changing it would do.
 
-## 写什么
+## What to write
 
-- 单位与精度。
-- 取值范围与边界，超出后会发生什么。
-- 来源：服务端约定、协议文档、产品口径、硬件限制。
-- 为什么是这个值，改大改小会怎样。
-- 有效期：带时间的阈值要写明什么时候复核。
+- Unit and precision.
+- Range and boundaries, and what happens past them.
+- Origin: a server contract, a protocol document, a product decision, a hardware limit.
+- Why this value, and what raising or lowering it would do.
+- Lifetime: a threshold that depends on time states when it gets reviewed.
 
-常量注释：导出给别处用的写 `/** */`，文件内私有的写 `//`。魔法值先提取成命名常量再写注释，只出现一次且含义直白的数字可以就地注释，出现多次一定要提取。
+For constants: exported ones get `/** */`, file-private ones get `//`. Extract a magic value into a named constant first, then comment it; a number that appears once with an obvious meaning may be commented in place, a number that appears more than once must be extracted.
 
-## 案例
+## Cases
 
-单位与来源
-✗ `export const TIMEOUT = 3000; // 超时时间`
-✓ `/** 网关按毫秒计时，服务端上限 10s；这里取 3s 留重试余量 */`
+Unit and origin
+✗ `export const TIMEOUT = 3000; // timeout`
+✓ `/** The gateway counts milliseconds and caps at 10s; 3s leaves room for a retry */`
 ✓ `export const TIMEOUT = 3000;`
-依据：缺单位和取值理由，普通行注释外部也看不到
+reason: the unit and the reasoning are missing, and a plain line comment stays invisible outside the file
 
-上限
-✗ `export const MAX_UPLOAD = 5 * 1024 * 1024; // 最大上传`
-✓ `/** 服务端硬限制 5MB，前端先拦；改这个值前先确认网关配置 */`
+Upper bound
+✗ `export const MAX_UPLOAD = 5 * 1024 * 1024; // max upload`
+✓ `/** 5MB is the server-side hard limit and the client rejects first; check the gateway config before changing this */`
 ✓ `export const MAX_UPLOAD = 5 * 1024 * 1024;`
-依据：缺谁定的上限、改动前要先动什么
+reason: who set the limit and what must move first are missing
 
-魔法值
+Magic value
 ✗ `if (retry > 3) { ... }`
-✓ `// 网关第 3 次后熔断，第 4 次必然失败`
+✓ `// the gateway trips after the 3rd failure, so the 4th is guaranteed to fail`
 ✓ `if (retry > MAX_RETRY) { ... }`
-依据：数字来源要解释，且先提取命名
+reason: the number needs its origin explained, and it should be named first
 
-有效期
-✗ `export const TRIAL_DAYS = 14; // 试用天数`
-✓ `/** 产品口径 14 天，2026 年合同改版后复核 */`
+Lifetime
+✗ `export const TRIAL_DAYS = 14; // trial days`
+✓ `/** A product decision of 14 days; revisit when the contract is revised in 2026 */`
 ✓ `export const TRIAL_DAYS = 14;`
-依据：缺复核时点
+reason: the review point is missing

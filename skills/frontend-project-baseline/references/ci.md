@@ -1,49 +1,49 @@
-# CI 流水线
+# CI pipeline
 
-CI 只做本地做不了或不该做的事：全量检查和集中判定。命令等于本地已有的 script，不额外发明。
+CI only does what cannot or should not be done locally: the full check and the single verdict. Its commands are the scripts that already exist locally, with nothing invented on top.
 
-## 阶段
+## Stages
 
-| 阶段 | 命令 | 门禁 |
+| Stage | Command | Gating |
 | --- | --- | --- |
-| 安装 | 严格锁文件安装，见 package-manager.md | 是 |
-| 静态检查 | `lint`、`stylelint`、`format:check`、`typecheck`，拆成并行 job | 是 |
-| 测试 | 单测，需要时加覆盖率门槛 | 是 |
-| 构建 | `build` | 是 |
-| 可选 | e2e、体积对比、依赖安全扫描 | 视项目 |
+| Install | A strict lock-file install, see package-manager.md | Yes |
+| Static analysis | `lint`, `stylelint`, `format:check`, `typecheck`, split into parallel jobs | Yes |
+| Test | Unit tests, with a coverage threshold where needed | Yes |
+| Build | `build` | Yes |
+| Optional | End-to-end tests, size comparison, dependency scanning | Depends on the project |
 
-静态检查拆成并行 job，比串在一个 job 里快，也能一眼看出是哪类问题。仓库里没有样式文件就省掉 `stylelint` 这一路。
+Splitting static analysis into parallel jobs is faster than chaining it in one job and shows at a glance which kind of problem appeared. A repository with no style files drops the `stylelint` leg.
 
-## 门禁
+## Gating
 
-- 全部检查通过才允许合并，并在主分支保护里设为必需，否则红叉也能合。
-- warning 不阻塞合并。
+- Every check has to pass before a merge, set as required in branch protection, or a red cross still merges.
+- Warnings do not block a merge.
 
-## 触发
+## Triggers
 
-| 事件 | 跑什么 |
+| Event | What runs |
 | --- | --- |
-| PR / 合并请求 | 全量检查，不部署 |
-| 推送到主分支 | 全量检查 + 部署 |
-| 打 tag | 构建产物 + 发布 |
+| Pull request | The full check, no deployment |
+| Push to the main branch | The full check, then deployment |
+| A tag | Build the artifact and publish |
 
-## 缓存与时长
+## Cache and duration
 
-- 缓存键含锁文件名和 Node 版本，只缓存包管理器的 store，不要缓存整个 `node_modules`。
-- 依赖没变时，安装应在秒级完成。
-- 单 job 超十分钟要查原因：装了两次依赖、跑了全量 e2e、缓存没命中。
-- monorepo 按受影响范围跑（turbo、nx 的 affected）。
+- The cache key includes the lock file name and the Node version, and only the package manager's store is cached, never the whole `node_modules`.
+- With dependencies unchanged, the install finishes in seconds.
+- A single job past ten minutes needs an explanation: dependencies installed twice, the full end-to-end suite inside it, or a cache that never hits.
+- A monorepo runs by affected scope (turbo or nx `affected`).
 
-## 安全
+## Security
 
-- 密钥只从 secret 注入，不写进 workflow 或提交的 `.env`；fork 来源的 PR 不注入生产密钥。
-- 权限按需给，默认 `contents: read`。第三方 action 固定版本号，不要用 `@main`。
+- Secrets come from the secret store, never from the workflow or a committed `.env`; a pull request from a fork gets no production secret.
+- Permissions are granted as needed, starting from `contents: read`. Third-party actions are pinned to a version, never `@main`.
 
-## 常见错误
+## Common failures
 
-| 症状 | 原因 |
+| Symptom | Cause |
 | --- | --- |
-| 本地过、CI 不过 | 两边命令或 Node 版本不同 |
-| 每次都重装依赖 | 缓存键或缓存路径写错 |
-| 某项检查从不失败 | 命令写错，没真正扫到文件 |
-| 合并后才发现问题 | 主分支没把检查设为必需 |
+| Passes locally, fails in CI | Different commands or Node versions on the two sides |
+| Dependencies reinstalled every run | A wrong cache key or cache path |
+| A check never fails | The command is wrong and never scans the files |
+| Problems appear after the merge | Branch protection does not make the check required |

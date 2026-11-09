@@ -1,8 +1,8 @@
-# 主题与状态
+# Themes and states
 
-判据：主题切到深色、键盘聚焦到控件时，每个组件仍然完整。缺哪一项就是哪一项没写。
+The test: switch the theme to dark and tab focus onto a control, and every component is still complete. Whatever is missing is a state that was never written.
 
-## 主题值只在 token 覆盖处写
+## Theme values live only where tokens are overridden
 
 ```css
 :root {
@@ -11,7 +11,7 @@
   --text: light-dark(#111827, #f9fafb);
 }
 
-/* ✓ 手动切换只覆盖变量，组件一行都不用动 */
+/* Right: a manual switch overrides variables only, leaving components untouched */
 [data-theme="dark"] {
   color-scheme: dark;
   --surface: #111827;
@@ -19,23 +19,23 @@
 }
 ```
 
-默认主题跟着系统走（`prefers-color-scheme` 或 `light-dark()`），手动切换用根节点上的 `data-theme`，别再加别的机制。组件里只认 `var(--surface)` 这类语义变量，不写 `.dark .card` 这样的分支——写了就会漏掉下一个新组件。
+The default theme follows the system (`prefers-color-scheme` or `light-dark()`), a manual switch uses `data-theme` on the root, and no other mechanism is added. Components know only semantic variables such as `var(--surface)`, never a branch like `.dark .card`, which the next new component will miss.
 
-## 交互状态按清单补齐
+## Complete the interaction states from the list
 
-| 组件 | 至少要有的状态 |
+| Component | States it needs at least |
 | --- | --- |
-| 按钮、链接 | `:hover`、`:focus-visible`、`:active`、`:disabled` |
-| 输入框 | `:focus-visible`、`:disabled`、`:read-only`、错误态 |
-| 有异步动作的控件 | 加载态（`isLoading`）、成功与失败提示 |
-| 列表、表格 | 空数据、只有一条、超长文本 |
+| Buttons, links | `:hover`, `:focus-visible`, `:active`, `:disabled` |
+| Inputs | `:focus-visible`, `:disabled`, `:read-only`, an error state |
+| Controls with async work | A loading state (`isLoading`), plus success and failure messages |
+| Lists and tables | Empty data, a single row, very long text |
 
-状态用类名表达（`isLoading`、`hasError`），不靠 `:nth-child` 或相邻选择器推断。
+States are expressed as class names (`isLoading`, `hasError`), never inferred from `:nth-child` or a sibling selector.
 
-## 把清单落成一个组件
+## The list applied to one component
 
 ```css
-/* ✓ 一个按钮把清单上的状态补齐，颜色全部来自语义 token */
+/* Right: one button covers the list, with every colour coming from semantic tokens */
 .button {
   background: var(--color-primary);
   color: var(--color-on-primary);
@@ -49,18 +49,18 @@
 .button.isLoading { opacity: 0.6; cursor: not-allowed; }
 ```
 
-深色主题只换 `:root` 上的变量，这段规则一行不用重写；缺哪个状态，对着上面的清单补一行。
+A dark theme swaps the variables on `:root` and rewrites none of this; a missing state adds one line from the list.
 
-## 聚焦与动效
+## Focus and motion
 
 ```css
-/* ✗ 收掉聚焦框，键盘用户找不到当前位置 */
+/* Wrong: removing the focus ring leaves keyboard users with no idea where they are */
 .button:focus-visible { outline: none; }
 
-/* ✗ 过渡所有属性，改一个颜色也连带动画 */
+/* Wrong: transitioning everything animates a colour change and anything else along with it */
 .card { transition: all 0.2s; }
 
-/* ✓ 只过渡要动的属性 */
+/* Right: only the properties meant to move */
 .card { transition: background-color 0.2s; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -68,4 +68,4 @@
 }
 ```
 
-聚焦框不用 `outline: none` 收掉，自定义就换成看得见的描边或阴影；过渡只写具体属性，用户开了减少动效就把过渡关掉。
+Never remove a focus ring with `outline: none`; a custom one replaces it with a visible border or shadow. Transitions name specific properties, and a user who asks for reduced motion gets them turned off.

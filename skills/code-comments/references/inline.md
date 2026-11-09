@@ -1,63 +1,63 @@
-# 内联注释
+# Inline comments
 
-写分支、循环、多步流程、临时兼容时读这份。
+Read this when writing a branch, a loop, a multi-step flow or temporary compatibility shim.
 
-内联注释只回答**为什么**：为什么这么写、为什么不能换顺序、为什么不用更简洁的写法。解释在做什么的注释删掉，那部分交给更清楚的名字和更小的函数。
+An inline comment answers **why** and nothing else: why written this way, why the order cannot change, why the shorter form does not work. A comment explaining what the code does gets deleted — clearer names and smaller functions do that job.
 
-## 写什么
+## What to write
 
-- 绕坑原因：为绕开某个 bug、兼容旧数据、规避平台差异。
-- 顺序依赖：为什么这两步不能换位置。
-- 性能取舍：为什么手写循环、为什么提前算好、为什么多存一份。
-- 临时兼容：兼容哪个版本、什么时候能删。
-- 反直觉的边界处理：为什么这里减一、为什么允许为空。
+- Workaround reason: sidestepping a bug, supporting old data, avoiding a platform difference.
+- Order dependency: why these two steps cannot swap places.
+- Performance tradeoff: why a hand-written loop, why compute ahead, why keep a second copy.
+- Temporary compatibility: which version it supports and when it can go.
+- Counter-intuitive boundaries: why this subtracts one, why empty is allowed here.
 
-注释写在被解释的那行上方，超过三行通常说明该抽函数或抽常量。
+A comment sits above the line it explains, and anything past three lines usually means a function or a constant should be extracted instead.
 
-## 多步流程编号
+## Numbered multi-step flows
 
-流程分几个阶段、顺序本身是信息、或者不看清单就读不懂时，才编号。编号后面写的还是原因和约束，不是这一步做了什么。
+Number the steps only when the flow has distinct phases, when the order itself is information, or when the list is unreadable without numbers. What follows a number is still the reason and the constraint, not what the step does.
 
-- 每步换成普通 `//` 内容不变，就不该编号。`// 2. 遍历列表` 只是给复述加了个序号，删掉。
-- 顺序真的关键就写清换了会坏在哪，见下面「顺序依赖」。
-- 两到四步；更长就把清单放在函数头写一次，函数体里只标需要解释的那几步。
-- 编号要跟着改动维护，插一步就重排。维护不了说明顺序不是关键信息，改回普通注释。
-- 每一步的名字就能讲清时抽函数，函数名比编号耐用，也不用维护。
+- If replacing each number with plain `//` text changes nothing, drop the numbers. `// 2. iterate the list` just re-states the code with an index attached.
+- If the order genuinely matters, say what breaks when it changes, as in "Order dependency" below.
+- Two to four steps; beyond that, write the list once in the function header and mark only the steps inside the body that need explaining.
+- Keep the numbering alive as the code changes, renumbering when a step is inserted. When you cannot keep up with that, the order was not the point — go back to plain comments.
+- When each step's name would say it, extract functions: a name survives edits that numbering does not.
 
-## 案例
+## Cases
 
-绕坑
-✗ `// index 这里减一处理`
-✓ `// 后端 id 从 0 开始，这里转成从 1 开始展示`
-依据：看着像在提醒，其实只说了做了什么，没说双方约定不一致在哪
+Workaround
+✗ `// subtract one for the index here`
+✓ `// the backend id starts at 0, this converts it to the 1-based value we display`
+reason: it looks like a reminder but only says what happens, not where the two sides disagree
 
-顺序依赖
-✗ `// 顺序不要改`
-✓ `// register 会立刻读取 init 写入的默认值，顺序不能换`
-依据：只说了不能改，没说改了坏在哪
+Order dependency
+✗ `// do not change the order`
+✓ `// register reads the default that init writes a moment earlier, so the order cannot change`
+reason: it says the order is fixed but not what breaks when it changes
 
-性能取舍
-✗ `// 用 for 循环性能更好`
-✓ `// 每帧调用，用 for 避免 map 创建中间数组`
-依据：只说更快，没说省在哪、什么条件下这个结论不成立
+Performance tradeoff
+✗ `// a for loop is faster`
+✓ `// runs every frame; for avoids the intermediate array map would allocate`
+reason: faster is not the information — what it saves and when the conclusion stops holding are
 
-多步流程
-✗ `// 1. 取设备列表` `// 2. 按时间窗切分` `// 3. 写入结果`
-✓ `// 1. 先按设备号聚合`
-  `// 2. 再按时间窗切分：窗口边界必须落在整点，顺序反了会切出跨设备的窗口`
-依据：编号承载的是阶段划分和顺序约束，每步在做什么代码自己说了
+Multi-step flow
+✗ `// 1. read the device list` `// 2. split by time window` `// 3. write the results`
+✓ `// 1. aggregate by device id first`
+  `// 2. then split by time window: boundaries must land on the hour, the other order produces windows that span devices`
+reason: numbering carries the phase split and the ordering constraint, while the code already says what each step does
 
-步骤能被名字说清
-✗ `// 1. 解析入参` `// 2. 拼查询条件` `// 3. 组装返回值`
-✓ 抽成 parseInput / buildQuery / toResult，函数体里只剩调用
-依据：名字能表达的不要用注释表达，编号还得跟着改动维护
+Steps a name can carry
+✗ `// 1. parse the arguments` `// 2. build the query` `// 3. assemble the response`
+✓ extract parseInput / buildQuery / toResult, leaving only the calls in the body
+reason: what a name can say does not belong in a comment, and numbering has to be maintained
 
-临时兼容
-✗ `// iOS 兼容，别删`
-✓ `// Safari 15 不支持 xxx，最低版本上调到 16 后删掉`
-依据：像注释也像提醒，但没写兼容哪个版本、什么时候能删
+Temporary compatibility
+✗ `// iOS compatibility, do not delete`
+✓ `// Safari 15 lacks this API; delete once the minimum version moves to 16`
+reason: it reads like a reminder but never says which version it covers or when it can go
 
-测试复述
-✗ `// 准备数据` `// 调用` `// 断言返回 2`
-✓ `// 金额按分存储，这里验证脏数据不抛错`
-依据：测试名和断言自己说得清，注释只补它们说不清的边界
+Test narration
+✗ `// prepare data` `// call it` `// assert the result is 2`
+✓ `// amounts are stored in cents; this checks that bad data does not throw`
+reason: the test name and the assertions already say the rest, so the comment only adds the boundary they cannot

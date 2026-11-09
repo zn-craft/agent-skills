@@ -1,67 +1,67 @@
-# 配置模板
+# Config templates
 
-`assets/` 下是按默认选型写好的一整套配置，复制到项目根就能跑。单包项目用 `assets/baseline/`，monorepo 再叠加 `assets/monorepo/`。
+Everything under `assets/` is a full set of configuration written for the default choices, copied to the project root and ready to run. A single package uses `assets/baseline/`; a monorepo adds `assets/monorepo/` on top.
 
-模板会被复制进使用者自己的项目，那里没有本 skill 的文档，所以模板必须自包含。模板里写的内容和 references 重复时，以模板实际写的为准，模板才是被执行的那份。
+Templates get copied into someone else's project, where this skill's documentation does not exist, so a template has to stand alone. Where a template and a reference overlap, the template wins, because that is the copy that runs.
 
-复制之前先看文末的「写法核对」：模板记录的是写它当时的写法，工具的配置格式换主版本就会变，按官方当前写法落地。
+Before copying, read "Checking the wording" at the end: a template records how things were written at the time, and a major tool release changes the configuration format, so land the current official form.
 
-## 复制清单
+## Copy list
 
-| 模板 | 目标位置 | 说明 |
+| Template | Destination | Notes |
 | --- | --- | --- |
-| `assets/baseline/*` | 项目根 | 含隐藏文件（`.husky/`、`.vscode/`、`.github/`），复制时别漏 |
-| `assets/monorepo/pnpm-workspace.yaml` | 仓库根 | 改 `packages` 为实际的包目录 |
-| `assets/monorepo/package.json` | 仓库根 | 覆盖 baseline 的 `package.json` |
+| `assets/baseline/*` | Project root | Includes hidden files (`.husky/`, `.vscode/`, `.github/`), so do not miss them when copying |
+| `assets/monorepo/pnpm-workspace.yaml` | Repository root | Change `packages` to the real package directories |
+| `assets/monorepo/package.json` | Repository root | Overrides the baseline `package.json` |
 
-monorepo 其余文件与单包相同，都放仓库根：lint、格式化、样式检查、hooks、CI 由根配置统管，各 package 只保留自己的 `tsconfig.json` 和 `dev` / `build` / `test` / `typecheck` 命令。`assets/baseline/tsconfig.json` 不要复制到仓库根，它按单包源码目录写死了 `include`。
+A monorepo keeps the rest of the files identical to a single package, all at the repository root: lint, formatting, style checking, hooks and CI are governed from the root, and each package keeps only its own `tsconfig.json` and its `dev` / `build` / `test` / `typecheck` commands. Do not copy `assets/baseline/tsconfig.json` to the repository root, since its `include` is written for a single package's source directory.
 
-monorepo 根 `package.json` 与单包的区别：`lint`、`lint:fix`、`format`、`format:check`、`stylelint` 在根跑一次覆盖全部包，`typecheck`、`test`、`build` 用 `pnpm -r` 递归到各 package，`dev` 用 `pnpm -r --parallel`。
+The differences in a monorepo root `package.json`: `lint`, `lint:fix`, `format`, `format:check` and `stylelint` run once at the root over every package, while `typecheck`, `test` and `build` recurse through `pnpm -r` and `dev` uses `pnpm -r --parallel`.
 
-## package.json 字段说明
+## package.json fields
 
-严格 JSON 写不了注释，`.nvmrc` 也只能写一行版本号，这两个文件的字段按这里理解：
+Strict JSON takes no comments and `.nvmrc` holds a single version, so read those two files through this table:
 
-| 字段 | 作用 |
+| Field | Purpose |
 | --- | --- |
-| `name` / `version` | 私有项目里不影响运行，改成项目名即可 |
-| `private` | 不发布到 npm，误发不了 |
-| `type: module` | 配置文件按 ESM 解析 |
-| `engines.node` | 安装时提示 Node 下限，与 `.nvmrc` 的版本对齐 |
-| `packageManager` | 版本管理工具据此锁定 pnpm 版本，CI 也读它 |
-| `scripts.dev` | 本地开发服务器；模板写的是 Vite，换构建工具时改这里 |
-| `scripts.build` | 只做打包，类型检查留给独立的 `typecheck`，避免 CI 里跑两遍 |
-| `scripts.preview` | 本地预览构建产物，Vite 专用，换工具时删掉 |
-| `scripts.lint` / `lint:fix` | 静态检查；前者只报，后者改能自动修的 |
-| `scripts.format` / `format:check` | 前者写入，后者只检查，进 CI |
-| `scripts.stylelint` / `stylelint:fix` | 同上，针对样式文件 |
-| `scripts.typecheck` | 独立的类型检查命令，构建链默认不做类型检查 |
-| `scripts.test` | 跑一次测试，CI 用同一个命令 |
-| `scripts.prepare` | 装依赖时接上 git hooks，CI 里靠 `HUSKY=0` 跳过 |
-| `lint-staged` | pre-commit 只处理暂存文件，按扩展名分组 |
+| `name` / `version` | Nothing at runtime for a private project, so rename it |
+| `private` | Keeps it out of npm, so it cannot be published by accident |
+| `type: module` | Config files parse as ESM |
+| `engines.node` | Warns at install time about the Node floor, aligned with `.nvmrc` |
+| `packageManager` | Version managers pin the pnpm version from this, and CI reads it too |
+| `scripts.dev` | The local dev server; the template writes the Vite command, changed when the bundler changes |
+| `scripts.build` | Bundling only, leaving type checking to `typecheck` so CI does not run it twice |
+| `scripts.preview` | Previews the built output locally, Vite-specific and deleted with the bundler |
+| `scripts.lint` / `lint:fix` | Static analysis; the first reports and the second fixes what it can |
+| `scripts.format` / `format:check` | The first writes and the second only checks, running in CI |
+| `scripts.stylelint` / `stylelint:fix` | The same pair for style files |
+| `scripts.typecheck` | The standalone type check, since a build chain does not type check by default |
+| `scripts.test` | One test run, and CI uses the same command |
+| `scripts.prepare` | Wires up git hooks on install, skipped in CI through `HUSKY=0` |
+| `lint-staged` | pre-commit handles staged files only, grouped by extension |
 
-依赖装什么见 [dependencies.md](dependencies.md)。
+What to install is in [dependencies.md](dependencies.md).
 
-## 装完要改的字段
+## Fields to change after installing
 
-| 文件 | 改什么 |
+| File | What to change |
 | --- | --- |
-| `package.json` | `name`、`dev` / `build` / `preview`（模板里写的是 Vite 命令）、`packageManager` 的 pnpm 版本 |
-| `.nvmrc` 与 `engines.node` | 写成团队实际使用的 Node 版本，两处保持一致 |
-| `tsconfig.json` | `lib`、`jsx`、`types` 按框架补；`include` 覆盖全部源码目录 |
-| `eslint.config.mjs` | 追加框架插件；忽略目录按项目补 |
-| `stylelint.config.mjs` | 没有 SCSS 就保持 `stylelint-config-standard`；`.vue` / `.svelte` 里的 `<style>` 需要配 `customSyntax` |
-| `commitlint.config.mjs` | 团队用别的提交信息规范时替换 `type-enum` |
-| `.env.example` | 前缀按框架改；变量逐个换成代码实际读取的 |
-| `.github/workflows/ci.yml` | 分支名、是否需要部署、测试与构建命令；没有测试就删掉 `test` job 与 `pnpm run test` |
+| `package.json` | `name`, `dev` / `build` / `preview` (the template writes Vite commands), and the pnpm version in `packageManager` |
+| `.nvmrc` and `engines.node` | The Node version the team actually uses, kept in step across both |
+| `tsconfig.json` | Add `lib`, `jsx` and `types` for the framework, and make `include` cover every source directory |
+| `eslint.config.mjs` | Add framework plugins and any project-specific ignores |
+| `stylelint.config.mjs` | Without SCSS keep `stylelint-config-standard`; `<style>` inside `.vue` or `.svelte` needs `customSyntax` |
+| `commitlint.config.mjs` | Replace `type-enum` when the team follows another commit convention |
+| `.env.example` | Change prefixes for the framework and replace every variable with what the code actually reads |
+| `.github/workflows/ci.yml` | Branch names, whether deployment happens, and the test and build commands; with no tests, delete the `test` job and `pnpm run test` |
 
-`.gitignore` 确认覆盖：`node_modules`、产物目录、`.env*`（保留 `.env.example`）、编辑器与系统临时文件。
+Confirm `.gitignore` covers `node_modules`, the build output directory, `.env*` with `.env.example` kept, and editor and OS temporary files.
 
-## 首次运行
+## First run
 
 ```bash
-pnpm install          # 触发 prepare，生成 .husky/_ 并把钩子接上
-pnpm run format       # 全量格式化，单独一个提交
+pnpm install          # runs prepare, generating .husky/_ and wiring up the hooks
+pnpm run format       # full formatting pass, in a commit of its own
 pnpm run lint
 pnpm run stylelint
 pnpm run typecheck
@@ -69,17 +69,17 @@ pnpm run test
 pnpm run build
 ```
 
-全量格式化会产生大范围 diff，按 [existing-project.md](existing-project.md) 的做法单独提交，哈希写进 `.git-blame-ignore-revs`。
+A full formatting pass produces a wide diff, so it lands as its own commit per [existing-project.md](existing-project.md), with the hash written into `.git-blame-ignore-revs`.
 
-## 写法核对
+## Checking the wording
 
-模板落笔时间早于你打开它的时间，下面这些地方换个主版本就变，落地前按官方文档确认一遍。
+A template was written before the day it is opened, and the places below change with a major release, so confirm each against the official documentation before landing.
 
-| 会变的地方 | 模板里的写法 | 核对什么 |
+| What changes | The template's form | What to check |
 | --- | --- | --- |
-| ESLint | `eslint.config.mjs`（flat config） | 存量项目可能还是 `.eslintrc`，接的时候决定迁移还是沿用 |
-| stylelint | `stylelint.config.mjs` 导出配置对象 | 风格类规则是否已挪到 `@stylistic`，是否还要关掉与 Prettier 冲突的项 |
-| husky | 钩子文件只写一行命令 | 新版本是否改了初始化方式和钩子文件要求 |
-| pnpm | `packageManager` 加 `pnpm-workspace.yaml` | workspace 级设置（`onlyBuiltDependencies` 等）现在写进哪个文件 |
-| GitHub Actions | `actions/checkout@v4`、`pnpm/action-setup@v4` | action 主版本是否已更新 |
-| Node | `.nvmrc` 写具体版本，`engines` 写主版本下限 | 是否换成当前 LTS，两处是否一致 |
+| ESLint | `eslint.config.mjs` (flat config) | An existing project may still be on `.eslintrc`, and adopting it means deciding between migrating and keeping it |
+| stylelint | `stylelint.config.mjs` exporting a config object | Whether stylistic rules moved to `@stylistic`, and whether Prettier conflicts still need turning off |
+| husky | A hook file holding one command | Whether a newer version changed the initialization or the hook file requirements |
+| pnpm | `packageManager` plus `pnpm-workspace.yaml` | Which file now holds workspace-level settings such as `onlyBuiltDependencies` |
+| GitHub Actions | `actions/checkout@v4`, `pnpm/action-setup@v4` | Whether the actions have a newer major version |
+| Node | `.nvmrc` with an exact version, `engines` with a major floor | Whether it matches the current LTS, and whether the two agree |

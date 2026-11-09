@@ -1,68 +1,68 @@
 ---
 name: js-module-structure
-description: 规定 JS/TS 非后端项目的模块目录、文件职责与命名导出约定。新建模块，写工具方法库或组件库，给前端应用加 api / store / hooks / utils / 组件 / 页面，往已有模块补类型、常量、mock、样式或测试，或在 React、Vue、原生小程序、Taro、uni-app 项目里拆分与归整目录时使用。只在创建、重组 JS/TS 代码，或决定代码放进哪个文件时使用，后端服务端工程不适用。
+description: Directory, file role and named-export conventions that decide where code goes in non-backend JS/TS projects. Use when creating a module, adding api / store / hooks / utils / pages to a frontend app, adding types, constants, styles or tests to an existing module, or reorganizing directories in React, Vue, Taro or uni-app projects. Not for backend services.
 ---
 
-# JS/TS 模块化目录结构
+# JS/TS module structure
 
-一个目录 = 一个模块。先有主逻辑，其余文件按需要再加。
+One directory is one module. The main logic comes first, and the other files appear as they are needed.
 
-工具方法库、组件库，以及前端应用里的任意模块（api、store、hooks、utils、组件、页面）共用这套分工；用不用框架、用哪个框架，只影响主逻辑文件叫什么名字，不影响目录怎么组织。新建模块、加文件、往已有文件里补内容时纠结归属，以及重构归整目录，都按这套来。团队已有冲突的规范时优先沿用团队的，这里给的是默认约定；后端服务端工程不适用。
+A utility library, a component library, and any module inside a frontend app (api, store, hooks, utils, components, pages) share this division of work; whether a framework is involved, and which one, only changes what the main logic file is called. Use it when creating a module, adding files, deciding where new content belongs, and when reorganizing a directory. A team convention that conflicts with this one wins, and what follows is the default. Backend services are out of scope.
 
-## 文件职责
+## File roles
 
-目录名和文件名用小驼峰：`userCard/userCard.ts`、`userCard/userCard.tsx`。代码里的组件标识符用大驼峰（`export { UserCard }`），否则 JSX 和模板会把它当原生标签。固定不变的常量文件可以用全大写（`API_CONFIG.ts`）。沿用仓库现状，同一个目录里不要混用风格。
+Directory and file names are lowerCamelCase: `userCard/userCard.ts`, `userCard/userCard.tsx`. A component identifier in code is UpperCamelCase (`export { UserCard }`), or JSX and templates treat it as a native tag. A file of fixed constants may be SCREAMING_SNAKE_CASE (`API_CONFIG.ts`). Follow what the repository already does, and do not mix styles inside one directory.
 
-| 文件 | 职责 | 什么时候才建 |
+| File | Role | When to create it |
 | --- | --- | --- |
-| `xx.ts` / `xx.tsx` / `xx.vue` / `xx.js` | 主逻辑，基名与目录名一致。框架对文件布局另有要求时从框架 | 总是先有它 |
-| `index.ts` | 唯一入口，只做 re-export（方法、组件、类型、常量），默认具名导出。模块外部的一切引用都从这里走，别深挖内部文件。框架要求它是主逻辑文件时从框架（原生小程序的页面 / 组件目录） | 目录要被模块外部引用时 |
-| `xx.config.ts` | 固定变量、配置项、与实现无关的可抽离方法；不放副作用 | 出现硬编码常量、魔法值、可复用的纯函数时 |
-| `xx.type.ts` | 类型声明：interface、type、enum、常量对象的类型 | 模块里有类型要写时。类型默认就放这里，不要求被多处复用才拆 |
-| `xx.mock.ts` | mock 数据及生成 mock 的方法 | 接口未就绪、要造测试或预览数据时 |
-| `xx.json` | 纯静态数据，不含任何逻辑 | 数据要给非 TS 侧消费时。原生小程序不能 import JSON，数据写在 `.ts` 里 |
-| `xx.css` / `xx.module.css` | 组件私有样式，与组件同级同名 | 组件有样式时。样式多于一个文件、或做组件库，才建 `styles/` 子目录 |
-| `xx.test.ts` | 测试（含 JSX 用 `xx.test.tsx`） | 要沉淀测试时 |
+| `xx.ts` / `xx.tsx` / `xx.vue` / `xx.js` | Main logic, with the basename matching the directory | Always the first file |
+| `index.ts` | The only entry, re-exporting methods, components, types and constants, named exports by default. Everything outside the module imports from here instead of reaching inside. Follow the framework when it requires this file to hold the main logic (native mini program page and component directories) | When the directory is imported from outside |
+| `xx.config.ts` | Fixed variables, configuration, and pure helpers that are independent of the implementation; no side effects | When hard-coded constants, magic values or reusable pure functions appear |
+| `xx.type.ts` | Type declarations: interface, type, enum, and the type of a constant object | When the module has types to write. They live here by default, with no requirement that they be reused elsewhere before earning a file |
+| `xx.mock.ts` | Mock data and the functions that generate it | When the API is not ready, or test and preview data is needed |
+| `xx.json` | Pure static data with no logic | When non-TS consumers need the data. A native mini program cannot import JSON, so the data goes into a `.ts` file instead |
+| `xx.css` / `xx.module.css` | Component-private styles, beside the component and under the same name | When the component has styles. A `styles/` subdirectory comes only when there is more than one style file or the directory is a component library |
+| `xx.test.ts` | Tests, as `xx.test.tsx` when JSX is involved | When tests are worth keeping |
 
-JS 项目（没有 TS 构建链）里 `xx.type.ts` 换成 `xx.d.ts` 或 JSDoc `@typedef`，作用一样：类型有明确归属，不散在主逻辑里。
+In a JS project without a TS build chain, `xx.type.ts` becomes `xx.d.ts` or JSDoc `@typedef` with the same purpose: types have one clear home instead of being scattered through the main logic.
 
-不要因为规范列了这些文件就都建出来。表里"什么时候才建"那一列就是拆分信号；空文件、只有一个 re-export 的文件、只为凑结构而存在的目录都是负资产，单个模块只有两三个文件很正常。
+Do not create every file this table lists. Its "when to create it" column is the signal to split; empty files, files with a single re-export and directories that exist to look complete are liabilities, and a module with two or three files is normal.
 
-## 常见模块类型
+## Common module types
 
-| 模块 | 主逻辑怎么切 | 常见附带文件 |
+| Module | How the main logic splits | Files that usually come with it |
 | --- | --- | --- |
-| 工具方法库 | 一个能力一个文件（`formatDate.ts`），目录名即能力名 | `index.ts` 汇总导出、`xx.type.ts`、`xx.test.ts` |
-| 组件库 | 一个组件一个目录（`userCard/userCard.tsx`） | `xx.type.ts`（props）、`xx.config.ts`（尺寸 / 变体映射）、`xx.test.tsx` |
-| api 模块 | 一个资源一个文件（`userApi.ts`） | `xx.type.ts`（请求 / 响应结构）、`xx.mock.ts`、`index.ts` |
-| store 模块 | 一个 store 一个文件（`useUserStore.ts`） | `xx.type.ts`（state / action 类型）、`xx.mock.ts`（初始 state 工厂） |
-| hooks / utils 模块 | 一个能力一个文件（`useXx.ts`、`xx.ts`） | `xx.test.ts`、`xx.type.ts` |
-| 页面 | 一页一个目录，入口文件名跟框架的路由约定（原生小程序是 `index.ts`） | `xx.config.ts`（页面级常量）、`xx.mock.ts`（预览数据） |
+| Utility library | One capability per file (`formatDate.ts`), with the directory named after the capability | `index.ts` re-exporting everything, `xx.type.ts`, `xx.test.ts` |
+| Component library | One component per directory (`userCard/userCard.tsx`) | `xx.type.ts` for props, `xx.config.ts` for size and variant maps, `xx.test.tsx` |
+| api module | One resource per file (`userApi.ts`) | `xx.type.ts` for request and response shapes, `xx.mock.ts`, `index.ts` |
+| store module | One store per file (`useUserStore.ts`) | `xx.type.ts` for state and action types, `xx.mock.ts` for the initial-state factory |
+| hooks / utils module | One capability per file (`useXx.ts`, `xx.ts`) | `xx.test.ts`, `xx.type.ts` |
+| Page | One page per directory, with the entry named after the framework's routing convention (`index.ts` in a native mini program) | `xx.config.ts` for page-level constants, `xx.mock.ts` for preview data |
 
-判断依据始终是"这段内容属于哪种职责"，而不是"它像不像前端组件"。
+The test is always which responsibility the content carries, never whether it looks like a frontend component.
 
-## 通用约定
+## Shared conventions
 
-- `index.ts` 只导出，不写实现。模块内部文件互相引用时用相对路径直连目标文件，不要绕回 `index.ts`，避免循环依赖。
-- 对外只认 `index.ts`：外部要用的东西都在这里导出，外部也只用它引用（`import { xx } from "@/modules/user"`），不要写 `from "@/modules/user/impl/detail"`。绕过入口深挖内部文件会让依赖跨层成环，对方目录一动还会波及所有调用方。
-- 具名导出优先；框架或加载机制要求默认导出时（路由 / 懒加载、页面入口等）才用 `export default`。导出顺序：方法 / 组件 → 类型 → 常量，类型用 `export type { ... }` 单独一行。
-- 组件默认写成 `const UserCard = () => {...}`，文件末尾统一 `export { UserCard }`，不用函数声明；需要默认导出的入口文件按上一条改成 `export default`。
-- `index.ts` 是模块对外的契约，库和包的导出面等于兼容性承诺。重构时先补 `index.ts` 再移动实现，外部 import 路径就不用改。
-- 模块下的子目录（`components/`、`hooks/`、`composables/`、`utils/`）沿用同一套文件分工。
-- 测试文件默认与实现同级；仓库已有 `__tests__/` 约定时沿用仓库的。
+- `index.ts` exports and does nothing else; files inside the module import each other by relative path straight to the target, never back through `index.ts`, which keeps cycles out.
+- The outside only knows `index.ts`: it exports what outside code may use, and outside code imports only through it (`import { xx } from "@/modules/user"`), never `from "@/modules/user/impl/detail"`. Reaching past the entry drags dependencies across layers and breaks every caller when that directory moves.
+- Named exports come first; `export default` is for a framework or loader that requires it, such as routing, lazy loading or a page entry. Export order: methods and components, then types, then constants, with types on their own `export type { ... }` line.
+- A component is written `const UserCard = () => {...}` and exported once at the end of the file with `export { UserCard }`, not as a function declaration; an entry file that has to default-export becomes `export default` per the rule above.
+- `index.ts` is the module's outward contract, and for a published library the export surface is a compatibility promise. When refactoring, add to `index.ts` first and move the implementation after, so external import paths stay put.
+- Subdirectories of a module (`components/`, `hooks/`, `composables/`, `utils/`) follow the same file roles.
+- A test file sits beside its implementation by default, and follows a repository that already keeps them in `__tests__/`.
 
-## 需要用户拍板时
+## When the user has to decide
 
-- 先读项目里的 `skill-memory/js-module-structure.md`，命中就照做、不再问。
-- 只在这类答案会影响整个仓库时问：目录与文件用哪种命名风格、是否给每个模块补 `index.ts`、类型文件放模块内还是公共目录。
-- 问完把结论和一句理由写进该文件，一行一条「结论 —— 一句理由」，不抄对话。
-- 其余按现状定：单个模块叫什么、某个文件放哪、这个模块要不要 `.mock.ts`。
+- Read the project's `skill-memory/js-module-structure.md` first; a recorded answer is followed without asking again.
+- Ask only when the answer affects the whole repository: which naming style directories and files use, whether every module gets an `index.ts`, and whether type files live in the module or in a shared directory.
+- Afterwards write the conclusion and one line of reasoning into that file, one "decision — reason" per line, not the conversation.
+- Everything else follows the current state: what a single module is called, where one file goes, whether this module needs a `.mock.ts`.
 
-## 继续读
+## Read next
 
-- React 项目（组件、页面、hooks）：读 [references/react.md](references/react.md)
-- Vue 项目：读 [references/vue.md](references/vue.md)
-- 小程序（原生 / Taro / uni-app）：读 [references/miniprogram.md](references/miniprogram.md)。注意原生小程序的 `index.json` 是框架配置文件，不是数据文件。
-- 工具方法库、组件库：读 [references/library.md](references/library.md)
-- api、store、hooks、utils 等不带界面的模块：读 [references/non-ui-modules.md](references/non-ui-modules.md)
-- 重构、归整目录：读 [references/refactor.md](references/refactor.md)
+- React projects (components, pages, hooks): [references/react.md](references/react.md)
+- Vue projects: [references/vue.md](references/vue.md)
+- Mini programs (native, Taro, uni-app): [references/miniprogram.md](references/miniprogram.md). Note that a native mini program's `index.json` is a framework configuration file, not a data file.
+- Utility and component libraries: [references/library.md](references/library.md)
+- Modules without a UI, such as api, store, hooks and utils: [references/non-ui-modules.md](references/non-ui-modules.md)
+- Refactoring and reorganizing directories: [references/refactor.md](references/refactor.md)

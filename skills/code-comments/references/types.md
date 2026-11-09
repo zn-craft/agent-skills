@@ -1,39 +1,39 @@
-# 类型声明注释
+# Comments on type declarations
 
-改 interface、type、枚举、类型别名、字段声明时读这份。
+Read this when changing an interface, a type, an enum, a type alias or a field declaration.
 
-类型注释补的是**签名表达不出的语义**：每个取值对应什么行为、字段什么时候会缺、单位与精度、默认值从哪来。
+A type comment carries **the semantics the signature cannot express**: what each value means for behavior, when a field is absent, units and precision, where a default comes from.
 
-## 写什么
+## What to write
 
-- 字段语义：名字之外的业务含义，尤其取不同值时系统行为不同。
-- 可选性原因：什么条件下才有值。
-- 联合类型：每个分支对应什么状态。
-- 枚举成员：各成员的行为差异，不是把成员名翻译一遍。
-- 单位与精度：金额、时间、比率。
+- Field semantics: the business meaning behind the name, especially where different values drive different system behavior.
+- Why a field is optional: under which conditions it holds a value.
+- Union types: what state each branch represents.
+- Enum members: how the members differ in behavior, not the member name translated into prose.
+- Units and precision: money, time, ratios.
 
-有类型系统时注释只管语义，不要再抄一遍类型。JS 没有类型系统，注释承担类型职责，用 JSDoc `@typedef` / `@property` 把结构写全。
+With a type system in place, comments carry semantics only and never restate the type. JS has no type system, so comments take on the types: spell the shape out with JSDoc `@typedef` / `@property`.
 
-字段注释用 `/** */` 挨着字段写，写完悬停到属性上就能看到；换成行注释，调用方那边什么都提示不出来。
+Write field comments as `/** */` next to the field so hovering the property shows them; a plain line comment tells the caller nothing.
 
-## 案例
+## Cases
 
-联合类型
-✗ `/** 状态 */` + `status: string`
-✓ `/** pending 待支付；paid 已支付不可撤；closed 超时关闭 */` + `status: OrderStatus`
-依据：缺每个取值对应的行为
+Union type
+✗ `/** status */` above `status: string`
+✓ `/** pending awaiting payment; paid settled and not reversible; closed timed out */` above `status: OrderStatus`
+reason: what each value does is missing
 
-可选字段
-✗ `/** 备注 */` + `remark?: string`
-✓ `/** 只有线下单有值，线上单恒为 undefined */` + `remark?: string`
-依据：缺什么条件下会缺
+Optional field
+✗ `/** note */` above `remark?: string`
+✓ `/** Set only on offline orders; always undefined on online ones */` above `remark?: string`
+reason: when it is absent is missing
 
-单位
-✗ `/** 金额 */` + `amount: number`
-✓ `/** 单位分，整数，不参与小数运算 */` + `amount: number`
-依据：缺单位
+Units
+✗ `/** amount */` above `amount: number`
+✓ `/** In cents, integer, never used in decimal arithmetic */` above `amount: number`
+reason: the unit is missing
 
-JS 结构
-✗ `// 用户对象`
+JS shape
+✗ `// the user object`
 ✓ `/** @typedef {{ id: string, name: string, roles: string[] }} User */`
-依据：没有类型系统时，注释就是类型声明
+reason: without a type system the comment is the type declaration

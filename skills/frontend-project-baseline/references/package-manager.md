@@ -1,42 +1,42 @@
-# 包管理器与 Node 版本约束
+# Package manager and Node constraints
 
-放在最前面，因为后面的命令写法、CI 缓存键都依赖它，改一次要动一圈文件。
+This comes first because command spelling and CI cache keys depend on it, and changing it touches a ring of files.
 
-## 选哪个
+## Which one
 
-| 仓库现状 | 选择 |
+| Repository state | Choice |
 | --- | --- |
-| 全新项目 | pnpm |
-| 已有 `package-lock.json` / `yarn.lock` / `bun.lock` | 对应的 npm / yarn / bun，沿用 |
+| A brand-new project | pnpm |
+| An existing `package-lock.json`, `yarn.lock` or `bun.lock` | npm, yarn or bun accordingly, kept as it is |
 
-选 pnpm 的原因：快、省磁盘、默认不开放幽灵依赖（没写进 `package.json` 的包 import 不进来）。代价是部分老包对 peer 依赖敏感，需要加 `public-hoist-pattern` 例外，例外要写进配置并注明原因。
+Why pnpm: it is fast, saves disk, and closes off phantom dependencies by default, so a package not written into `package.json` cannot be imported. The cost is that some older packages are sensitive to peer dependencies and need a `public-hoist-pattern` exception, written into the config with its reason.
 
-要发布到 npm 的库，打包前用 `npm pack` 验证产物内容，不要假定 pnpm 的符号链接结构和 npm 一致。
+For a library published to npm, check the built output with `npm pack` before publishing rather than assuming pnpm's symlink layout matches npm's.
 
-## 锁文件
+## Lock files
 
-- 一个仓库只留一个。换包管理器时同步删旧锁文件、改 CI、改 README 和 Dockerfile。
-- 必须提交，且不要手工编辑。
-- CI 用严格模式：pnpm `--frozen-lockfile`、npm `ci`、yarn `--immutable`。本地保持普通模式。
-- 换包管理器时，CI 的安装命令和缓存键要一起改，否则会一直命中旧缓存。缓存键怎么构成见 [ci.md](ci.md)。
+- One per repository. Switching package manager deletes the old lock file and updates CI, the README and the Dockerfile in the same change.
+- Committed, and never edited by hand.
+- CI installs in strict mode: pnpm `--frozen-lockfile`, npm `ci`, yarn `--immutable`. Local installs stay in normal mode.
+- Switching package manager means changing CI's install command and cache key together, or the old cache keeps hitting. Cache key composition is covered in [ci.md](ci.md).
 
-## 固定 Node 版本
+## Pinning the Node version
 
-| 位置 | 写法 | 作用 |
+| Location | Written as | Effect |
 | --- | --- | --- |
-| `.nvmrc` | `22.11.0` | 本地版本管理器自动切换 |
-| `engines.node` | `>=22` | 安装时提示，pnpm 默认强制 |
-| `packageManager` | `pnpm@10.0.0` | corepack 据此锁定包管理器版本 |
+| `.nvmrc` | `22.11.0` | The local version manager switches automatically |
+| `engines.node` | `>=22` | Warns at install time, and pnpm enforces it by default |
+| `packageManager` | `pnpm@10.0.0` | corepack pins the package manager version from this |
 
-有原生模块、Docker 构建、产物要归档时，`engines` 从 `>=22` 收成 `22.x`。`engines` 默认只提示不拦截，要硬拦得显式开 `engine-strict=true`。
+With native modules, a Docker build or archived artifacts, tighten `engines` from `>=22` to `22.x`. `engines` only warns by default; blocking installs means turning on `engine-strict=true` explicitly.
 
-## 版本区间
+## Version ranges
 
-| 场景 | 写法 |
+| Scenario | Written as |
 | --- | --- |
-| 应用依赖 | `^`，真正的约束在锁文件 |
-| 库的 dependencies | `^`，写宽一点 |
-| 库的 peerDependencies | 写范围，覆盖使用者可能用的主版本 |
-| CLI、构建插件等要精确复现的 | 写死 |
+| Application dependencies | `^`, with the lock file carrying the real constraint |
+| A library's dependencies | `^`, on the loose side |
+| A library's peerDependencies | A range covering the major versions consumers may use |
+| A CLI or build plugin that must be reproduced exactly | Pinned |
 
-升级集中做，固定周期或例行任务里跑一次完整 CI。不要夹在功能分支里顺手升。
+Upgrades happen in one batch, either on a fixed cycle or as a routine task running the full CI. They do not ride along on a feature branch.

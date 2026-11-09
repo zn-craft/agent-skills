@@ -1,35 +1,35 @@
-# 待办、弃用与清理
+# Markers, deprecation and cleanup
 
-写待办标记、临时逻辑、弃用声明，或看到注释掉的代码时读这份。
+Read this when writing a TODO marker, temporary logic or a deprecation notice, or when you find commented-out code.
 
-## 待办标记
+## TODO markers
 
-格式固定：标记词 + 原因 + 解除条件。只有标记词没有解除条件的待办没人会做，等于长期噪音。
+The shape is fixed: marker word + reason + release condition. A marker with no release condition never gets done and turns into long-term noise.
 
-✗ `// TODO 优化`
-✓ `// TODO(2025-Q4): 搜索服务支持前缀匹配后，删掉这里的本地过滤`
+✗ `// TODO optimize`
+✓ `// TODO(2025-Q4): drop the local filter once the search service supports prefix matching`
 
-✗ `// FIXME 有并发问题`
-✓ `// FIXME: 并发写同一条记录会丢更新，等仓储层加乐观锁后移除本判断`
+✗ `// FIXME concurrency problem`
+✓ `// FIXME: concurrent writes to one record lose updates; remove this check once the repository layer adds optimistic locking`
 
-同一处堆了三条以上待办，说明该拆任务，而不是继续攒标记。
+Three or more markers stacked in one place mean the work should be split, not annotated further.
 
-## 弃用
+## Deprecation
 
-写清替代方案和移除时间，只写"已弃用"等于没写。跨模块或前后端的弃用要写清两边，否则一边改了另一边还在用。
+State the replacement and the removal date; "deprecated" alone says nothing. A deprecation that crosses modules or the client-server boundary has to name both sides, or one side changes while the other keeps calling it.
 
-✓ `/** @deprecated 用 fetchOrders 替代，接口 2026-03 下线，此前需保留 */`
+✓ `/** @deprecated Use fetchOrders; this endpoint goes away in 2026-03, keep it until then */`
 
-## 该删的
+## What to delete
 
-下面这些在提交历史里都有位置，留在代码里只会误导人：
+All of the following already have a home in the commit history, and leaving them in the code only misleads readers:
 
-- 注释掉的旧实现、旧配置。要留证据就留在提交信息里。
-- 调试残留：打印语句、临时开关、写死的测试值。
-- 文件头模板：`@author`、创建日期、版本号、修改记录。文件负责什么代码里能看出来，谁改的看提交历史。
-- 被注释掉的测试。要跳过就用框架的 skip 并写明原因，彻底废弃就删。
-- 条件已经满足的待办标记，和已完工的阶段性说明。
+- Commented-out implementations and old config. If the evidence matters, it belongs in the commit message.
+- Debug leftovers: print statements, temporary switches, hard-coded test values.
+- File header templates: `@author`, creation date, version, change log. The code shows what the file does, and the history shows who changed it.
+- Commented-out tests. To skip one, use the framework's skip with a stated reason; to abandon it, delete it.
+- Markers whose condition is already met, and notes about stages that are finished.
 
-✗ `// const oldUrl = "..."; 旧接口保留备用`
-✓ 删掉；要回溯用 `git log`
-依据：需要"备用"往往说明还有没确认的假设，该写清假设而不是留代码
+✗ `// const oldUrl = "..."; old endpoint kept as a fallback`
+✓ delete it and use `git log` when you need to look back
+reason: "as a fallback" usually means an assumption is still unconfirmed, and the assumption should be written down instead of the dead code

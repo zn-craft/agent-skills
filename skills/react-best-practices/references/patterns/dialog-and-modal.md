@@ -1,24 +1,24 @@
-# 业务模式：Dialog / Modal / Drawer
+# Case: dialogs, modals and drawers
 
-适用：确认弹窗、编辑表单弹窗、抽屉和带异步动作的对话框。
+Applies to confirmation dialogs, form dialogs, drawers and dialogs with async actions.
 
-## 先选择控制方式
+## Choose how it is controlled
 
-- **受控**：父级持有 `open`，通过 `onOpenChange` 接收关闭请求。适用于页面流程、路由状态和外部按钮控制。
-- **非受控**：组件内部管理开关，调用方提供初始值或触发器。适用于简单、独立的展示组件。
-- **命令式 Ref**：只在库或场景明确需要 `open()` / `close()` 命令式 API 时使用；不要把它作为默认状态管理方式。
+- **Controlled**: the parent holds `open` and receives close requests through `onOpenChange`. Fits page flows, route state and control from an outside button.
+- **Uncontrolled**: the component manages its own visibility, with the caller supplying an initial value or a trigger. Fits simple, self-contained display components.
+- **Imperative ref**: only where a library or a scenario clearly needs an `open()` or `close()` API; not the default way to manage state.
 
-## 推荐决策
+## Recommended decisions
 
-1. 弹层只负责展示和通用交互；业务提交、删除等动作由业务组件或 Hook 管理。
-2. 关闭策略明确：点击遮罩、按 Escape、点击关闭按钮、提交中是否允许关闭，由产品语义决定。
-3. 模态 Dialog 应正确管理焦点：打开时移动焦点、限制焦点范围、关闭后恢复到触发元素。
-4. 非模态 Popover / Tooltip 不是 Dialog，不应机械套用焦点陷阱。
-5. 异步提交区分 idle / submitting / success / error；避免重复提交，并确保失败后用户能恢复。
-6. 多个弹窗是否允许同时打开、关闭父弹窗时子弹窗如何处理，需有明确策略。
-7. 优先使用经过验证的 Dialog / Drawer 组件库；不要只靠 `role="dialog"` 自己模拟完整无障碍行为。
+1. The overlay only displays and handles generic interaction; business actions such as submitting or deleting belong to a business component or Hook.
+2. Closing behavior is explicit: backdrop click, Escape, the close button and whether closing is allowed mid-submit are product decisions.
+3. A modal dialog manages focus properly, moving focus in, keeping it inside, and restoring it to the trigger on close.
+4. A non-modal popover or tooltip is not a dialog and must not inherit a focus trap.
+5. An async submit distinguishes idle, submitting, success and error; duplicate submits are blocked and the user can recover from a failure.
+6. Whether several overlays may be open at once, and what happens to a child dialog when its parent closes, is a stated policy.
+7. Use a proven dialog or drawer library rather than simulating full accessibility from `role="dialog"` alone.
 
-## Props 设计示意
+## A Props sketch
 
 ```tsx
 interface IDialogProps {
@@ -30,12 +30,12 @@ interface IDialogProps {
 }
 ```
 
-这是受控接口示意，不是完整 Dialog 实现。完整组件还需处理 portal、焦点、键盘、滚动锁定、ARIA 和 SSR 兼容等细节。
+This is a controlled interface, not a full dialog implementation. A complete component also handles the portal, focus, keyboard, scroll locking, ARIA and SSR compatibility.
 
-## 常见误区
+## Common mistakes
 
-- 一个 Modal 组件包含所有业务动作和各种业务字段。
-- 通过大量布尔 Props 组合出难以理解的弹窗类型。
-- 关闭弹窗后是否清空表单状态没有定义。
-- 只处理视觉关闭，不恢复焦点或键盘操作。
-- 把 Popover、Menu、Tooltip 和模态 Dialog 统一当作同一种弹层。
+- One modal component carrying every business action and every business field.
+- Combining boolean Props until the dialog types become unreadable.
+- No definition of whether form state is cleared when the dialog closes.
+- Handling only the visual close, without restoring focus or keyboard operation.
+- Treating popovers, menus, tooltips and modal dialogs as one kind of overlay.

@@ -1,6 +1,7 @@
 /**
- * 单包维度的探测：包管理器、TypeScript、格式化、静态检查、样式检查、
- * 提交门禁、CI、环境变量模板。每个函数只返回状态，不做输出。
+ * Single-package detection: package manager, TypeScript, formatting, static
+ * analysis, style checking, commit gates, CI and env templates.
+ * Each function returns state only and prints nothing.
  */
 
 import { readdir } from "node:fs/promises";

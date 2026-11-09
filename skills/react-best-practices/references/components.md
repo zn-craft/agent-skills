@@ -1,19 +1,19 @@
-# 组件设计
+# Component design
 
-## 职责与边界
+## Responsibility and boundaries
 
-- 新组件默认写成函数组件，需要状态或订阅时用 Hooks。维护已有类组件时沿用现有结构，迁移单独安排。
-- 组件围绕内聚的 UI 职责或业务流程组织；一个组件可以包含多个紧密相关的状态和子区域。
-- 按业务职责、状态所有权、变化原因和独立测试 / 错误恢复边界拆分，不按行数、JSX 层级或 State 数量机械拆分。
-- 函数长度、嵌套深度、Props 数量和布尔 Props 数量只是复杂度预警，不是自动重构阈值；这一条只管组件，普通函数与工具函数的拆分按项目语言层规范判断。
-- 独立 UI 可提组件；可复用状态逻辑可提 Hook；纯计算和格式化用普通函数。
-- 要拆子组件时，提到父组件函数外。只在本文件使用时可以留在同一文件，按项目约定决定是否单独建文件。在父组件内重新定义子组件会让子树重新挂载，丢掉局部状态。
+- New components are function components, using Hooks when they need state or subscriptions. Existing class components keep their structure; migrating them is a separate piece of work.
+- Components are organized around one cohesive UI responsibility or business flow; a component may hold several closely related pieces of state and sub-areas.
+- Split by business responsibility, state ownership, reason to change and independent test or error-recovery boundaries, not by line count, JSX depth or the number of state values.
+- Function length, nesting depth, the number of Props and the number of boolean Props are complexity warnings, not automatic refactor thresholds; this rule covers components only, while splitting ordinary and utility functions follows the project's language-level conventions.
+- Independent UI becomes its own component; reusable stateful logic becomes a Hook; pure computation and formatting stay plain functions.
+- A child component is declared outside the parent function. It may live in the same file when only that file uses it, and the project's conventions decide whether it gets a file of its own. Redefining a component inside its parent remounts that subtree and loses local state.
 
-组件内部可以按「局部常量 → state → 派生值 → Effect → 事件处理 → 渲染」组织。按依赖调整顺序，把同一件事的代码放在一起。
+Inside a component, the usual order is local constants → state → derived values → Effects → event handlers → render. Adjust the order by dependency and keep code for one concern together.
 
-## Props 与受控模式
+## Props and controlled mode
 
-搜索栏和表格共用筛选条件时，页面持有条件，搜索栏负责触发修改。表格收到筛选后的行即可。下面以本地过滤为例。
+When a search bar and a table share filter conditions, the page owns the condition and the search bar asks for changes. The table only receives the filtered rows. The example below filters locally.
 
 ```tsx
 const [keyword, setKeyword] = useState("");
@@ -27,25 +27,25 @@ return (
 );
 ```
 
-- Props 表达调用方真实需求；事件 Props 用 `onXxx`，内部处理函数可用 `handleXxx`。Prop 名用 camelCase，值是组件类型时用 PascalCase，如 `Component={Row}`。
-- 不要把 `style`、`className` 这类 DOM 名当业务语义用，例如用 `style="dark"` 传主题，改用语义化名称。组件包裹根元素时透传 `className` 是常规做法，不在此列。
-- 受控组件由调用方提供 `value` / `checked` 与回调；非受控组件使用 `defaultValue` / `defaultChecked`。避免维护与外部值同步的镜像 State。
-- 若多个 Props 组合会形成互相矛盾的状态，评估判别式联合、组合 API 或拆分组件。
-- Props 多不必然设计差；先检查重复职责、配置爆炸和业务耦合。
+- Props express what the caller actually needs; event Props are named `onXxx` and internal handlers may use `handleXxx`. Prop names are camelCase, and PascalCase when the value is a component type, as in `Component={Row}`.
+- Do not carry business meaning in DOM names such as `style` or `className`, for example passing a theme through `style="dark"`; use a semantic name instead. Passing `className` through when a component wraps a root element is normal and not part of this rule.
+- A controlled component receives `value` / `checked` and a callback from the caller; an uncontrolled one uses `defaultValue` / `defaultChecked`. Avoid keeping mirror state in step with an external value.
+- When combinations of Props can form contradictory states, consider a discriminated union, a composition API or splitting the component.
+- Many Props do not by themselves mean a bad design; look first for duplicated responsibilities, configuration explosion and business coupling.
 
-## 组合与复用
+## Composition and reuse
 
-- 复杂内容优先考虑 `children` 或具名组合，而不是持续增加配置 Props。
-- 相同外观不等于相同业务语义。抽象稳定行为与规则，不把差异转移到大量 `variant` / 布尔开关。
-- 不必等到第三次重复才抽象；两个场景已共享稳定规则就可能值得抽。反之，多次相似也不代表应该合并。
-- 包装第三方组件的价值在于统一 API、隔离供应商或增加业务语义，不是无条件多包一层。
+- Reach for `children` or named composition for complex content instead of adding configuration Props indefinitely.
+- Looking alike is not the same as meaning the same. Abstract stable behavior and rules, and do not move the differences into a pile of `variant` flags or booleans.
+- Waiting for a third repetition before abstracting is not required; two places sharing a stable rule may already be worth extracting. The reverse holds too: repeated similarity does not mean the code should be merged.
+- Wrapping a third-party component earns its place by unifying the API, isolating the vendor or adding business meaning, not by adding a layer for its own sake.
 
-## 组件通信
+## Communication between components
 
-- 父子通信优先 Props 下传、回调上抛；子组件不直接修改父级传入对象。
-- 兄弟组件共享状态时先找共同所有者；只有深层消费者确有共享需求时再评估 Context / Store。
-- Context 反映真实共享范围，不为减少几层 Props 透传而引入；高频更新时关注消费者范围和订阅粒度。
+- Parent-child communication passes Props down and raises callbacks up; a child never mutates an object its parent handed it.
+- Siblings that share state look for a common owner first; Context or a store is considered only when deep consumers genuinely need the same data.
+- Context mirrors real sharing, not a way to avoid passing Props through a few layers; where updates are frequent, watch how much of the tree subscribes and how narrowly.
 
-## 决策检查
+## A check before splitting
 
-拆分前问：职责是否独立？是否有自己的状态 / 交互 / 错误恢复？是否有独立变化原因？拆分是否让调用方更清楚？如果答案是否定的，先保持简单。
+Ask whether the responsibility stands alone, whether it has its own state, interaction or error recovery, whether it changes for its own reason, and whether splitting makes the caller clearer. If the answer is no, keep it simple for now.

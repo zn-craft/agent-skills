@@ -9,10 +9,11 @@ Install a single skill from this repository into an agent's skills directory.
 .\scripts\install-skill.ps1 my-skill -Agent claude -Project
 
 .EXAMPLE
-.\scripts\install-skill.ps1 my-skill -Dest C:\temp\skills -Force
+.\scripts\install-skill.ps1 my-skill -Dest C:\temp\skills -Lang zh -Force
 
 .NOTES
 -Agent <name> is required unless -Dest is given: there is no default agent.
+-Lang picks en or zh, defaulting to en when that version exists and zh otherwise.
 -Global (the default) installs into $<NAME>_HOME/skills, falling back to ~/.<name>/skills;
 -Project installs into ./.<name>/skills. -Dest cannot be combined with -Global/-Project.
 #>
@@ -29,6 +30,9 @@ param(
 
   [string]$Dest,
 
+  [ValidateSet('en', 'zh')]
+  [string]$Lang,
+
   [switch]$Force
 )
 
@@ -40,14 +44,35 @@ $Ref = 'main'
 function Show-AvailableSkills {
   param([string]$RepoRoot)
 
-  $skillsRoot = Join-Path $RepoRoot 'skills'
-  if (-not (Test-Path -LiteralPath $skillsRoot)) { return }
-  Get-ChildItem -Path $skillsRoot -Recurse -File -Filter 'SKILL.md' |
-    Sort-Object FullName |
-    ForEach-Object {
-      $relative = $_.FullName.Substring($skillsRoot.Length).TrimStart('\', '/')
-      Write-Host "  - $((($relative -replace '\\', '/') -replace '/SKILL\.md$', ''))"
+  $names = @()
+  foreach ($root in @('skills', 'zh')) {
+    $dir = Join-Path $RepoRoot $root
+    if (-not (Test-Path -LiteralPath $dir)) { continue }
+    $names += Get-ChildItem -Path $dir -Directory | Select-Object -ExpandProperty Name
+  }
+  foreach ($name in ($names | Sort-Object -Unique)) {
+    $langs = @()
+    foreach ($lang in @('en', 'zh')) {
+      $sub = if ($lang -eq 'en') { 'skills' } else { 'zh' }
+      if (Test-Path -LiteralPath (Join-Path $RepoRoot "$sub/$name/SKILL.md")) { $langs += $lang }
     }
+    if ($langs.Count -eq 0) { continue }
+    Write-Host "  - $name [$($langs -join ' ')]"
+  }
+}
+
+# 英文版在 skills/<名>/，中文版在 zh/<名>/；没指定 -Lang 时优先英文版。
+function Get-SkillLangSource {
+  param([string]$RepoRoot, [string]$Name)
+
+  $en = Join-Path $RepoRoot "skills/$Name"
+  $zh = Join-Path $RepoRoot "zh/$Name"
+  $order = if ($Lang) { @($Lang) } else { @('en', 'zh') }
+  foreach ($lang in $order) {
+    $candidate = if ($lang -eq 'en') { $en } else { $zh }
+    if (Test-Path -LiteralPath (Join-Path $candidate 'SKILL.md')) { return $candidate }
+  }
+  return $null
 }
 
 if ($Skill -notmatch '^[a-z0-9]+(-[a-z0-9]+)*$') {
@@ -93,17 +118,15 @@ $tempRoot = $null
 try {
   $localMatch = $null
   if (Test-Path -LiteralPath $localSkillsRoot) {
-    $localMatch = Get-ChildItem -Path $localSkillsRoot -Recurse -Directory -Filter $Skill -ErrorAction SilentlyContinue |
-      Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md') } |
-      Select-Object -First 1
+    $localMatch = Get-SkillLangSource -RepoRoot $checkoutRoot -Name $Skill
   }
 
   if ($localMatch) {
-    $source = $localMatch.FullName
-    Write-Host "Using local checkout: skills/$Skill"
+    $source = $localMatch
+    Write-Host "Using local checkout: $($source.Substring($checkoutRoot.Length).TrimStart('\', '/') -replace '\\', '/')"
   }
   elseif (Test-Path -LiteralPath $localSkillsRoot) {
-    Write-Warning "Skill '$Skill' not found in this checkout ($localSkillsRoot)."
+    Write-Warning "Skill '$Skill' not found in this checkout ($checkoutRoot)."
     Write-Host 'Available skills:'
     Show-AvailableSkills -RepoRoot $checkoutRoot
     throw "Skill not found: $Skill"
@@ -117,25 +140,22 @@ try {
     Invoke-WebRequest -Uri $url -OutFile $archive -UseBasicParsing
     Expand-Archive -LiteralPath $archive -DestinationPath $tempRoot -Force
 
-    $match = Get-ChildItem -Path $tempRoot -Recurse -Directory -Filter $Skill -ErrorAction SilentlyContinue |
-      Where-Object {
-        (Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md')) -and
-        ($_.FullName -replace '\\', '/') -match "/skills/$([regex]::Escape($Skill))$"
-      } |
-      Select-Object -First 1
+    $extracted = Get-ChildItem -Path $tempRoot -Directory | Select-Object -First 1
+    $source = if ($extracted) { Get-SkillLangSource -RepoRoot $extracted.FullName -Name $Skill } else { $null }
 
-    if (-not $match) {
+    if (-not $source) {
       Write-Warning "Skill '$Skill' not found in $Repo@$Ref."
       Write-Host 'Available skills:'
-      $extracted = Get-ChildItem -Path $tempRoot -Directory | Select-Object -First 1
       if ($extracted) { Show-AvailableSkills -RepoRoot $extracted.FullName }
       throw "Skill not found: $Skill"
     }
-    $source = $match.FullName
   }
 
   New-Item -ItemType Directory -Path $Dest -Force | Out-Null
-  $target = Join-Path $Dest $Skill
+  $langUsed = Split-Path -Leaf (Split-Path -Parent $source)
+  if ($langUsed -eq 'skills') { $langUsed = 'en' }
+  $installName = if ($langUsed -eq 'zh') { "$Skill-zh" } else { $Skill }
+  $target = Join-Path $Dest $installName
   if (Test-Path -LiteralPath $target) {
     if ($Force) {
       $backup = "$target.bak." + (Get-Date -Format 'yyyyMMddHHmmss')
@@ -148,7 +168,7 @@ try {
   }
 
   Copy-Item -LiteralPath $source -Destination $target -Recurse
-  Write-Host "Installed $Skill -> $target"
+  Write-Host "Installed $installName ($langUsed) -> $target"
 }
 finally {
   if ($tempRoot -and (Test-Path -LiteralPath $tempRoot)) {

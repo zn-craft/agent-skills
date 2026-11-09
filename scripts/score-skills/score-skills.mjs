@@ -8,11 +8,11 @@ import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
 import { DIMENSIONS } from "./checks.mjs";
-import { buildContext, findSkillDirs, parseFrontmatter } from "./context.mjs";
+import { buildContext, findVariants, parseFrontmatter } from "./context.mjs";
 import { clampDeductions } from "./deductions.mjs";
 import { pad, reportPath, round, toPosix } from "./format.mjs";
-import { DEFAULT_MIN, REPO_ROOT, SKILLS_DIR } from "./score-skills.config.mjs";
-import { estimateTokens } from "./text.mjs";
+import { DEFAULT_MIN, REPO_ROOT } from "./score-skills.config.mjs";
+import { EN_ROOT, ZH_ROOT, expectedName, variantsFromPath } from "../validate-skills/layout.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -49,7 +49,7 @@ export function scoreSkill(ctx) {
     stats: {
       files,
       bytes: ctx.proseBytes,
-      estimatedTokens: estimateTokens(ctx.prose),
+      estimatedTokens: ctx.proseTokens,
     },
   };
 }
@@ -78,7 +78,19 @@ export function printReport(result, min) {
   console.log("");
 }
 
-export async function changedSkillDirs(ref) {
+/** 从改动路径反推语言版本目录：skills/<名>/ 是英文版，zh/<名>/ 是中文版。 */
+async function variantFromPath(relative) {
+  const segments = toPosix(relative).split("/");
+  if (segments.length < 3) return null;
+  const [root, skill] = segments;
+  if (root !== EN_ROOT && root !== ZH_ROOT) return null;
+  const dir = path.join(REPO_ROOT, root, skill);
+  if ((await readFile(path.join(dir, "SKILL.md"), "utf8").catch(() => null)) === null) return null;
+  const lang = root === EN_ROOT ? "en" : "zh";
+  return { skill, lang, dir, name: expectedName(skill, lang) };
+}
+
+export async function changedSkillVariants(ref) {
   let output;
   try {
     const result = await execFileAsync("git", ["diff", "--name-only", "--diff-filter=ACMR", `${ref}...HEAD`], {
@@ -92,19 +104,14 @@ export async function changedSkillDirs(ref) {
     process.exit(2);
   }
 
-  const dirs = new Set();
+  const found = new Map();
   for (const line of output.split("\n")) {
     const relative = toPosix(line.trim());
-    if (!relative.startsWith("skills/")) continue;
-    const segments = relative.split("/");
-    if (segments.length < 3) continue;
-    const flat = path.join(SKILLS_DIR, segments[1]);
-    const nested = path.join(SKILLS_DIR, segments[1], segments[2]);
-    const flatSkill = await readFile(path.join(flat, "SKILL.md"), "utf8").catch(() => null);
-    if (flatSkill !== null) dirs.add(flat);
-    else dirs.add(nested);
+    if (!relative.startsWith(`${EN_ROOT}/`) && !relative.startsWith(`${ZH_ROOT}/`)) continue;
+    const variant = await variantFromPath(relative);
+    if (variant) found.set(variant.dir, variant);
   }
-  return [...dirs].sort();
+  return [...found.values()].sort((left, right) => left.dir.localeCompare(right.dir));
 }
 
 export async function run() {
@@ -144,44 +151,50 @@ export async function run() {
   }
 
   const registry = [];
-  for (const dir of await findSkillDirs(SKILLS_DIR)) {
-    const source = await readFile(path.join(dir, "SKILL.md"), "utf8").catch(() => "");
+  for (const variant of await findVariants(REPO_ROOT)) {
+    const source = await readFile(path.join(variant.dir, "SKILL.md"), "utf8").catch(() => "");
     const frontmatter = parseFrontmatter(source);
     if (frontmatter.ok && frontmatter.fields.description) {
-      registry.push({ name: path.basename(dir), description: frontmatter.fields.description });
+      registry.push({
+        skill: variant.skill,
+        lang: variant.lang,
+        name: variant.name,
+        description: frontmatter.fields.description,
+      });
     }
   }
 
-  let dirs;
+  let variants;
   if (options.changed) {
-    dirs = await changedSkillDirs(options.changed);
+    variants = await changedSkillVariants(options.changed);
   } else if (options.targets.length) {
-    dirs = [];
+    variants = [];
     for (const target of options.targets) {
       const resolved = path.resolve(REPO_ROOT, target);
       const stats = await lstat(resolved).catch(() => null);
-      if (!stats) {
-        console.error(`路径不存在：${reportPath(resolved)}`);
+      if (!stats || !stats.isDirectory()) {
+        console.error(`路径不存在或不是目录：${reportPath(resolved)}`);
         process.exit(2);
       }
-      if (stats.isDirectory() && (await readFile(path.join(resolved, "SKILL.md"), "utf8").catch(() => null)) !== null) {
-        dirs.push(resolved);
-      } else {
-        dirs.push(...(await findSkillDirs(resolved)));
+      const found = await variantsFromPath(resolved);
+      if (!found.length) {
+        console.error(`没有找到 skill：${reportPath(resolved)}（英文版在 skills/<name>/，中文版在 zh/<name>/）`);
+        process.exit(2);
       }
+      variants.push(...found);
     }
   } else {
-    dirs = await findSkillDirs(SKILLS_DIR);
+    variants = await findVariants(REPO_ROOT);
   }
 
-  if (!dirs.length) {
+  if (!variants.length) {
     console.log(options.changed ? "改动范围里没有 skill，跳过评分。" : "skills/ 下还没有任何 skill。");
     return;
   }
 
   const results = [];
-  for (const dir of dirs) {
-    const ctx = await buildContext(dir, registry);
+  for (const variant of variants) {
+    const ctx = await buildContext(variant, registry);
     results.push(scoreSkill(ctx));
   }
 
@@ -202,7 +215,7 @@ export async function run() {
     );
   } else {
     for (const result of results) printReport(result, options.min);
-    console.log(`${results.length} 个 skill，${results.length - failed.length} 个达标，${failed.length} 个低于 ${options.min}。`);
+    console.log(`${results.length} 个语言版本，${results.length - failed.length} 个达标，${failed.length} 个低于 ${options.min}。`);
     for (const result of failed) console.log(`  低于阈值：${result.label} — ${result.score.toFixed(2)}`);
   }
 

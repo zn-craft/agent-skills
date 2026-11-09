@@ -1,34 +1,34 @@
-# 状态与 Effect
+# State and Effects
 
-## 状态归属与形状
+## Ownership and shape
 
-- 局部交互状态（展开、Tab、临时输入）：组件内 `useState` / `useReducer`。
-- 兄弟组件共享：优先提升到最近共同所有者；深层子树确有共同消费者时再考虑 Context / Store。
-- 可分享、刷新后需恢复的筛选 / 分页 / 详情标识：评估 URL 状态。
-- 服务端数据：交给框架数据机制或请求缓存层，不无理由复制进客户端 Store。
-- 状态放在满足所有消费者的最小范围；读取者多不自动意味着必须全局化。
-- 列表选择通常保存稳定 ID，再从当前列表派生对象；编辑草稿则明确快照语义。
-- 互斥流程可用判别式状态（如 `idle | loading | success | error`），避免非法布尔组合。
-- 只有字段存在共同不变量、需要原子转换时才合并为对象或使用 `useReducer`；独立状态不必为减少 setter 次数而强行合并。
-- 不无条件把 Props 镜像成 State；草稿、初始值快照或非受控语义需明确说明。
+- Local interaction state (expanded, active tab, temporary input) is `useState` / `useReducer` inside the component.
+- Siblings that share it lift it to the nearest common owner; Context or a store comes in only when a deep subtree genuinely shares it.
+- Filters, pagination and the identifier of a detail view, which are shareable and restored after a reload, are worth evaluating as URL state.
+- Server data is handled by the framework's data mechanism or a request cache, not copied into a client store without reason.
+- State lives in the smallest scope that satisfies every consumer; many readers do not by themselves make it global.
+- A list selection usually stores stable ids and derives objects from the current list, while an editing draft states its snapshot semantics explicitly.
+- Mutually exclusive flows may use a discriminated state such as `idle | loading | success | error` instead of illegal boolean combinations.
+- Merge into one object or reach for `useReducer` only when fields share an invariant and change atomically; independent state does not need merging just to have fewer setters.
+- Do not mirror Props into state unconditionally; a draft, an initial-value snapshot or deliberately uncontrolled behavior says so out loud.
 
-## 不可变更新
+## Immutable updates
 
-- 更新对象或数组时创建新值。直接修改已有值会改变其他代码正在读取的数据。
-- 新值依赖前一次 State 时使用函数式更新：`setCount((n) => n + 1)`。
+- Updating an object or an array creates a new value. Mutating the existing one changes data other code is reading.
+- When the new value depends on the previous state, use the functional form: `setCount((n) => n + 1)`.
 
-## Effect 判断
+## Deciding on an Effect
 
-使用 Effect 前先问：**是否需要让 React 与某个外部系统保持同步？**
+Before reaching for an Effect, ask: **does this need React to stay in sync with an external system?**
 
-适合 Effect：事件订阅、定时器、WebSocket、浏览器 API、第三方实例和外部 DOM 系统。
+Effects fit event subscriptions, timers, WebSockets, browser APIs, third-party instances and external DOM systems.
 
-通常不需要 Effect：派生数据、格式化、点击后提交、由用户动作直接触发的请求、仅为同步两个 React State。
+They usually do not fit derived data, formatting, a submit triggered by a click, a request caused directly by a user action, or keeping two React states in step with each other.
 
-例如，筛选结果只取决于 `users` 和 `keyword`。可以去掉这份 state 和同步 Effect。
+Filtered results, for example, depend only on `users` and `keyword`, so the extra state and the Effect that syncs it can go:
 
 ```tsx
-// 改前：先渲染旧结果，再由 Effect 更新。
+// Before: render stale results first, then let an Effect update them.
 const [visibleUsers, setVisibleUsers] = useState<User[]>([]);
 useEffect(() => {
   setVisibleUsers(users.filter((user) => user.name.includes(keyword)));
@@ -36,18 +36,18 @@ useEffect(() => {
 ```
 
 ```tsx
-// 改后：本次渲染直接使用当前输入算出结果。
+// After: this render computes the result from the current input.
 const visibleUsers = users.filter((user) => user.name.includes(keyword));
 ```
 
-- Effect 必须声明它读取的响应式依赖。依赖不合预期时，先调整 Effect 读什么，再改依赖数组。
-- 建立持续资源 / 订阅时必须提供对称清理；一次性同步（如同步 `document.title`）不需要空清理函数。
-- setup 与 cleanup 应成对；在 Strict Mode 开发环境下应能承受额外的 setup → cleanup → setup。
-- 外部 Store 订阅优先评估 `useSyncExternalStore`。
-- 不在渲染期间读写 `ref.current` 来驱动 UI。
+- An Effect declares every reactive dependency it reads. When the dependencies do not behave, change what the Effect reads before changing the array.
+- A long-lived resource or subscription needs symmetric cleanup; a one-off sync such as setting `document.title` does not need an empty cleanup function.
+- Setup and cleanup come in pairs, and Strict Mode's extra setup → cleanup → setup sequence must be survivable in development.
+- Subscribing to an external store is a case for `useSyncExternalStore` first.
+- Do not read or write `ref.current` during render to drive the UI.
 
-## 高级边界
+## Advanced boundaries
 
-- Props 变化需重置整棵子树时，优先使用有语义的稳定 `key`。
-- 渲染期间更新当前组件 State 是少见高级模式；能用派生值、事件处理或 `key` 时不要采用。
-- React 19.2+ 的 `useEffectEvent` 只用于 Effect 触发的非响应式逻辑；不能在普通事件处理器调用、传给子组件或隐藏真实依赖。
+- When changing Props should reset a whole subtree, prefer a stable `key` that carries meaning.
+- Updating this component's own state during render is a rare advanced pattern; use a derived value, an event handler or a `key` when one of them works.
+- `useEffectEvent` (React 19.2+) is only for non-reactive logic triggered by an Effect; it cannot be called from an ordinary event handler, passed to a child, or used to hide a real dependency.

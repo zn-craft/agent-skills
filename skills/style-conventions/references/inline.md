@@ -1,38 +1,38 @@
-# 行内样式
+# Inline styles
 
-判据：这个值是不是只有运行时才知道。是就传进 `style`，不是就留在样式表里——样式表是默认落点，行内样式留给例外。
+The test: does this value only exist at runtime? If so it goes into `style`; if not it stays in the stylesheet, which is the default landing place while inline styles are the exception.
 
-## 行内只放运行期算出来的值
+## Inline carries runtime values only
 
 ```html
-<!-- ✓ 进度、拖拽位移、用户选的色值，只有运行时才知道 -->
+<!-- Right: progress, drag offset and a user-chosen colour are only known at runtime -->
 <div class="bar" style="--progress: 62%"></div>
 
-<!-- ✗ 静态值走行内，等于同时绕开变量、主题和伪类 -->
+<!-- Wrong: a static value in an inline style bypasses variables, themes and pseudo-classes at once -->
 <div class="card" style="padding: 16px; background: #ffffff">…</div>
 ```
 
-传变量，不传属性值：数交给 `style`，怎么用留在样式表里，`:hover`、深色主题、媒体查询都还在。
+Pass variables, not property values: the number goes into `style` and how it is used stays in the stylesheet, so `:hover`, the dark theme and media queries all still apply.
 
 ```css
 .bar { width: var(--progress, 0%); }
 ```
 
-接口返回、CMS 富文本、用户配置带来的值同样算运行期值，可以走行内；静态外观值回样式表，随状态变化的加类名，不用行内值切换。
+Values from an API, CMS rich text or user configuration count as runtime values and may go inline; static appearance returns to the stylesheet, and a state change is expressed by adding a class rather than switching an inline value.
 
-## 行内样式压过所有类
+## An inline style beats every class
 
-行内样式的优先级高于任何选择器，只有 `!important` 能反压。写进去之后想再改，要么动模板，要么加 `!important`，两条路都比改样式表贵。服务端渲染的项目还多一层：模板里拼的值要转义，否则是注入入口。
+An inline style outranks any selector, and only `!important` can push back. Once written, changing it later means editing the template or adding `!important`, both more expensive than editing a stylesheet. A server-rendered project adds another layer: values assembled into a template have to be escaped, or they are an injection point.
 
-## 各处的写法
+## How each stack writes it
 
-| 场景 | 写法 | 注意 |
+| Setting | Form | Watch out for |
 | --- | --- | --- |
-| React | `style={{ width: p + "%" }}` | 属性名驼峰，自定义属性写成字符串键 |
-| Vue | `:style="{ '--progress': p + '%' }"` | 自定义属性带引号，别和静态 `style` 混写 |
-| 小程序 | `style="width: 62%"`，值由数据绑定拼出 | 拼接进来的值不要带用户输入 |
-| 原生 HTML | `style="--progress: 62%"` | 模板里同样只放变量，不放属性值 |
+| React | `style={{ width: p + "%" }}` | camelCase property names, and custom properties as string keys |
+| Vue | `:style="{ '--progress': p + '%' }"` | quote the custom property, and do not mix it with a static `style` |
+| Mini program | `style="width: 62%"`, with the value built by data binding | assembled values must not carry user input |
+| Plain HTML | `style="--progress: 62%"` | templates still carry variables rather than property values |
 
-## 自检
+## Self-check
 
-在模板里搜 `style=`，逐个判断这个值是不是运行时算出来的。答不上来的搬回样式表；搬不动的看一眼它的优先级有没有把后面的类压死。
+Search the templates for `style=` and decide for each value whether it is computed at runtime. What cannot be answered moves back to the stylesheet; what cannot be moved gets a look at whether its specificity is crushing later classes.

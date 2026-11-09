@@ -5,7 +5,10 @@
 import { lstat, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { reportPath } from "./format.mjs";
-import { collectSentences, findDuplicates, findLongParagraphs } from "./text.mjs";
+import { collectSentences, estimateTokens, findDuplicates, findLongParagraphs } from "./text.mjs";
+
+// 布局和识别规则与校验脚本共用一份，定义在 scripts/validate-skills/layout.mjs。
+export { findVariants } from "../validate-skills/layout.mjs";
 
 export function parseFrontmatter(text) {
   const normalized = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
@@ -29,25 +32,6 @@ export function parseFrontmatter(text) {
   return { ok: true, fields, body: normalized.slice(end + 4) };
 }
 
-export async function findSkillDirs(root) {
-  const found = [];
-  async function walk(dir) {
-    const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
-    if (entries.some((entry) => entry.isFile() && entry.name === "SKILL.md")) {
-      found.push(dir);
-      return;
-    }
-    for (const entry of entries) {
-      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
-      await walk(path.join(dir, entry.name));
-    }
-  }
-  const direct = await lstat(root).catch(() => null);
-  if (!direct) return found;
-  await walk(root);
-  return found.sort();
-}
-
 export async function collectEntries(dir, prefix = "") {
   const entries = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -67,8 +51,9 @@ export function referenceFiles(entries) {
   return markdownFiles(entries).filter((entry) => entry.relative.startsWith("references/"));
 }
 
-export async function buildContext(dir, registry) {
-  const name = path.basename(dir);
+export async function buildContext(variant, registry) {
+  const dir = variant.dir;
+  const name = variant.name;
   const label = reportPath(dir);
   const source = await readFile(path.join(dir, "SKILL.md"), "utf8").catch(() => "");
   const frontmatter = parseFrontmatter(source);
@@ -84,20 +69,27 @@ export async function buildContext(dir, registry) {
   const markdown = markdownFiles(entries);
   const textFiles = [];
   for (const entry of markdown) {
+    const text = await readFile(entry.full, "utf8");
     textFiles.push({
       relative: entry.relative,
       bytes: (await lstat(entry.full)).size,
-      text: await readFile(entry.full, "utf8"),
+      tokens: estimateTokens(text),
+      text,
     });
   }
 
   const references = textFiles.filter((file) => file.relative.startsWith("references/"));
   const skillBytes = (await lstat(path.join(dir, "SKILL.md"))).size;
+  const skillTokens = estimateTokens(source);
   const proseBytes = textFiles.reduce((sum, file) => sum + file.bytes, 0);
+  const proseTokens = textFiles.reduce((sum, file) => sum + file.tokens, 0);
   const prose = textFiles.map((file) => file.text).join("\n");
+  const others = registry.filter((item) => item.skill !== variant.skill);
 
   return {
     dir,
+    skill: variant.skill,
+    lang: variant.lang,
     name,
     label,
     source,
@@ -108,12 +100,15 @@ export async function buildContext(dir, registry) {
     textFiles,
     references,
     referenceBytes: references.reduce((sum, file) => sum + file.bytes, 0),
+      referenceTokens: references.reduce((sum, file) => sum + file.tokens, 0),
     skillBytes,
+      skillTokens,
     proseBytes,
+      proseTokens,
     prose,
     relativeSet: new Set(entries.map((entry) => entry.relative)),
-    otherSkillNames: registry.map((item) => item.name),
-    otherDescriptions: registry.filter((item) => item.name !== name),
+    otherSkillNames: others.map((item) => item.name),
+    otherDescriptions: others,
     duplicates: findDuplicates(textFiles.flatMap((file) => collectSentences(file.relative, file.text))),
     longParagraphs: textFiles.flatMap((file) => findLongParagraphs(file).map((item) => ({ ...item, file: file.relative }))),
   };

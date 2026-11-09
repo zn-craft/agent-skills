@@ -1,91 +1,91 @@
 /**
- * 文本报告渲染：把报告对象拼成 Markdown 表格。
+ * Text report rendering: turn the report object into Markdown tables.
  */
 
 import { EXPECTED_SCRIPTS, PACKAGE_TABLE_LIMIT } from "./detect-stack.config.mjs";
 
 export function renderMarkdown(report) {
   const lines = [];
-  lines.push(`# 工程化现状：${report.target}`);
+  lines.push(`# Engineering baseline: ${report.target}`);
   lines.push("");
-  lines.push(`包管理器：${report.packageManager.name ?? "未知"}`);
+  lines.push(`Package manager: ${report.packageManager.name ?? "unknown"}`);
   if (report.packageManager.lockfiles.length) {
-    lines.push(`锁文件：${report.packageManager.lockfiles.join("、")}`);
+    lines.push(`Lock files: ${report.packageManager.lockfiles.join(", ")}`);
   }
   if (report.packageManager.conflict.length) {
-    lines.push(`⚠️ 存在多个锁文件：${report.packageManager.conflict.join("、")}`);
+    lines.push(`⚠️ more than one lock file: ${report.packageManager.conflict.join(", ")}`);
   }
   lines.push(
-    `Node 约束：${report.node.engines ?? "未声明"}${report.node.nvmrc ? `（${report.node.nvmrc}）` : ""}`,
+    `Node constraint: ${report.node.engines ?? "not declared"}${report.node.nvmrc ? ` (${report.node.nvmrc})` : ""}`,
   );
   lines.push("");
 
   const row = (label, value) => lines.push(`| ${label} | ${value ?? "—"} |`);
 
-  lines.push("## 技术栈");
+  lines.push("## Stack");
   lines.push("");
-  lines.push("| 项 | 值 |");
+  lines.push("| Item | Value |");
   lines.push("| --- | --- |");
-  row("框架", report.frameworks.join("、") || "未识别");
-  row("构建工具", report.buildTools.join("、") || "未识别");
-  row("测试", report.testRunners.join("、") || "未识别");
+  row("Frameworks", report.frameworks.join(", ") || "not detected");
+  row("Build tools", report.buildTools.join(", ") || "not detected");
+  row("Tests", report.testRunners.join(", ") || "not detected");
   const packagesWithTs = report.monorepo.packages.filter((item) => item.hasTsconfig).length;
   row(
     "TypeScript",
-    report.typescript.configs.join("、") ||
-      (report.monorepo.detected && packagesWithTs ? `各子包（${packagesWithTs} 个 tsconfig）` : "未使用"),
+    report.typescript.configs.join(", ") ||
+      (report.monorepo.detected && packagesWithTs ? `per package (${packagesWithTs} tsconfig files)` : "not used"),
   );
   lines.push("");
 
   if (report.monorepo.detected) {
     const mono = report.monorepo;
-    lines.push("## 工作区");
+    lines.push("## Workspace");
     lines.push("");
-    lines.push(`工具：${mono.tools.join(" + ") || "未识别"}`);
-    lines.push(`匹配到的包：${mono.packages.length} 个`);
+    lines.push(`Tools: ${mono.tools.join(" + ") || "not detected"}`);
+    lines.push(`Matched packages: ${mono.packages.length}`);
     if (mono.unresolved.length) {
-      lines.push(`没匹配到目录的 glob：${mono.unresolved.join("、")}`);
+      lines.push(`Globs with no matching directory: ${mono.unresolved.join(", ")}`);
     }
     lines.push("");
     if (mono.packages.length) {
-      lines.push("| 包 | 路径 | tsconfig | typecheck |");
+      lines.push("| Package | Path | tsconfig | typecheck |");
       lines.push("| --- | --- | --- | --- |");
       const shown = mono.packages.slice(0, PACKAGE_TABLE_LIMIT);
       for (const item of shown) {
         lines.push(
-          `| ${item.name} | ${item.dir} | ${item.hasTsconfig ? "有" : "无"} | ${item.scripts.includes("typecheck") ? "有" : "无"} |`,
+          `| ${item.name} | ${item.dir} | ${item.hasTsconfig ? "yes" : "no"} | ${item.scripts.includes("typecheck") ? "yes" : "no"} |`,
         );
       }
       if (mono.packages.length > shown.length) {
-        lines.push(`| … | 还有 ${mono.packages.length - shown.length} 个包 | | |`);
+        lines.push(`| … | ${mono.packages.length - shown.length} more packages | | |`);
       }
       lines.push("");
     }
   }
 
-  lines.push("## 已配置");
+  lines.push("## In place");
   lines.push("");
-  lines.push("| 项 | 值 |");
+  lines.push("| Item | Value |");
   lines.push("| --- | --- |");
-  row("格式化", report.formatting.tools.join(" + ") || "无");
-  row("静态检查", report.lint.tools.join(" + ") || "无");
-  row("样式检查", report.stylelint.tools.join(" + ") || "无");
-  row("git hooks", report.hooks.tools.join(" + ") || "无");
-  row("lint-staged", report.hooks.lintStaged ? "已配置" : "无");
-  row("CI", report.ci.platforms.join(" + ") || "无");
-  row("环境变量模板", report.env.templates.join("、") || "无");
-  row("已有命令", Object.keys(report.scripts).filter((s) => EXPECTED_SCRIPTS.includes(s)).join("、") || "无");
+  row("Formatting", report.formatting.tools.join(" + ") || "none");
+  row("Static analysis", report.lint.tools.join(" + ") || "none");
+  row("Style checking", report.stylelint.tools.join(" + ") || "none");
+  row("git hooks", report.hooks.tools.join(" + ") || "none");
+  row("lint-staged", report.hooks.lintStaged ? "configured" : "none");
+  row("CI", report.ci.platforms.join(" + ") || "none");
+  row("Env template", report.env.templates.join(", ") || "none");
+  row("Scripts present", Object.keys(report.scripts).filter((s) => EXPECTED_SCRIPTS.includes(s)).join(", ") || "none");
   lines.push("");
   if (report.env.stray.length) {
-    lines.push(`本地 .env 文件（未读内容）：${report.env.stray.join("、")}`);
+    lines.push(`Local .env files (contents not read): ${report.env.stray.join(", ")}`);
     lines.push("");
   }
 
   const order = { missing: 0, partial: 1, ok: 2 };
   const gaps = [...report.gaps].sort((a, b) => order[a.status] - order[b.status]);
-  lines.push("## 缺口");
+  lines.push("## Gaps");
   lines.push("");
-  lines.push("| 状态 | 项 | 说明 |");
+  lines.push("| Status | Item | Detail |");
   lines.push("| --- | --- | --- |");
   for (const gap of gaps) {
     const status = gap.status === "ok" ? "✅" : gap.status === "partial" ? "◐" : "❌";
@@ -93,6 +93,6 @@ export function renderMarkdown(report) {
   }
   lines.push("");
   const missing = gaps.filter((gap) => gap.status !== "ok").length;
-  lines.push(missing ? `共 ${missing} 项需要补齐，按 SKILL.md 的接入顺序处理。` : "基线已完整。");
+  lines.push(missing ? `${missing} items still need work; follow the adoption order in SKILL.md.` : "The baseline is complete.");
   return lines.join("\n");
 }

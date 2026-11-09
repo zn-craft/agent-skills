@@ -1,4 +1,4 @@
 interface:
-  display_name: "typescript-best-practices"
-  short_description: "TypeScript 类型建模与写法决策"
-  default_prompt: "用 $typescript-best-practices 定 TypeScript 的类型建模、边界收窄与模块导出方案"
+  display_name: "TypeScript best practices"
+  short_description: "Type modeling, boundary narrowing and module export decisions for TypeScript"
+  default_prompt: "Use $typescript-best-practices to settle type modeling, boundary narrowing and module export shapes for this TypeScript change."

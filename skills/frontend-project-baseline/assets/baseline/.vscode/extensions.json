@@ -1,5 +1,5 @@
 {
-  // 打开仓库时提示安装，保证大家用的是同一套检查工具
+  // Offered when the repository is opened, so everyone uses the same tools
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",

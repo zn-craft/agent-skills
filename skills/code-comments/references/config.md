@@ -1,78 +1,78 @@
-# 工程化配置注释
+# Comments in engineering config
 
-改任何配置时读这份——构建、检查、CI、部署、环境变量、容器编排，不限于表里列出的那些工具。
+Read this when changing any configuration — build, lint, CI, deploy, environment variables, container orchestration, and tools beyond the ones listed here.
 
-是不是配置看谁读走它：由构建、检查、CI、部署、容器、运行时读取的算配置。名字里的 `config`、`rc`、`conf`、`.env` 只是常见信号，`Makefile`、`Cargo.toml`、`justfile` 这类名字里没有的同样是配置；反过来，被产品代码 import 的 `config` 目录只是普通模块，按源码处理。
+Whether something is config depends on who reads it: a build, lint, CI, deploy, container or runtime process reading it makes it config. `config`, `rc`, `conf` and `.env` in a name are only hints; `Makefile`, `Cargo.toml` and `justfile` are config without any such hint. The other way round, a `config` directory imported by product code is an ordinary module — treat it as source.
 
-配置注释回答三个问题：**这项管什么、为什么取这个值、改了会怎样**。代码看得出的部分不用写，缺的是取舍理由。
+A config comment answers three questions: **what this setting controls, why it holds this value, and what changes if you touch it.** Anything the code already shows stays out; what is missing is the reasoning behind the choice.
 
-## 一、先判断能不能写
+## 1. Decide first whether you may write anything
 
-1. **生成物不写**：文件头带 `DO NOT EDIT`、`@generated` 之类标记，路径落在 `.gitignore`、`vendor/`、`node_modules/`、`dist/` 里，或是常见锁文件——一律不写，写了也会被覆盖。
-2. **已经有人写过注释就能写**：跟着它的位置和风格写下去。
-3. **没人写过就看格式**，见下表。表里没有的格式按同样办法判断，不要因为没列出来就当成不能写；拿不准时加一行注释跑一次解析或构建验证，验证不了就按不能写处理。
+1. **Generated files: no.** A file headed `DO NOT EDIT`, `@generated` or similar, a path inside `.gitignore`, `vendor/`, `node_modules/` or `dist/`, or a common lock file — write nothing, it gets overwritten anyway.
+2. **A file that already carries comments: yes.** Follow their position and style.
+3. **A file with none: judge by format**, see the table. For a format that is not listed, reason the same way — do not read "not listed" as "not allowed". When you are unsure, write one line and run the parser or the build once; if you cannot verify it, treat it as not allowed.
 
-| 格式族 | 例子 | 注释符 |
+| Format family | Examples | Comment syntax |
 | --- | --- | --- |
-| 代码形式的配置 | `vite.config.ts`、`eslint.config.mjs`、`config.py` | 该语言自己的注释 |
-| 行式配置 | YAML、TOML、INI、properties、`.env`、`Dockerfile`、`Makefile` | `#`，INI 也可能用 `;` |
-| JSONC | `tsconfig.json`、VS Code 配置 | `//` 或 `/* */` |
-| 严格 JSON | `package.json`、多数 `*.json` | 不支持，见第三节 |
-| 标记语言 | `pom.xml` 等 XML | `<!-- -->`，有的工具重写文件时会清掉 |
+| Config written as code | `vite.config.ts`, `eslint.config.mjs`, `config.py` | the language's own comment syntax |
+| Line-based config | YAML, TOML, INI, properties, `.env`, `Dockerfile`, `Makefile` | `#`, INI may also take `;` |
+| JSONC | `tsconfig.json`, VS Code settings | `//` or `/* */` |
+| Strict JSON | `package.json`, most `*.json` | unsupported, see section 3 |
+| Markup | XML such as `pom.xml` | `<!-- -->`, which some tools strip when they rewrite the file |
 
-`tsconfig.json` 是 `.json` 后缀但按 JSONC 解析，可以写注释。
+`tsconfig.json` carries a `.json` suffix but parses as JSONC, so comments are fine.
 
-## 二、写什么
+## 2. What to write
 
-- **取值原因**：为什么是 3 不是 5，为什么这项必须开、那项必须关。
-- **版本锁定**：锁版本或做依赖覆盖时写清解锁条件，否则没人敢升。
-- **特殊步骤**：非常规参数、跳过检查、额外缓存、多跑一遍的命令。
-- **环境差异**：本地能过 CI 不过、生产要额外开关的原因。
-- **临时绕过**：为绕开某个 bug 加的开关，连同删除条件。
+- **Why this value**: why 3 and not 5, why this setting must be on and that one must be off.
+- **Version pinning**: when you pin a version or override a dependency, state the condition that lifts the pin, or nobody dares upgrade.
+- **Unusual steps**: non-standard flags, skipped checks, extra caching, a command that runs twice.
+- **Environment differences**: why it passes locally and fails in CI, why production needs an extra switch.
+- **Temporary workarounds**: the switch added for a specific bug, together with the condition for deleting it.
 
-同一份配置里注释超过十来条，通常说明该拆配置，或该把成体系的说明单独成文（见第三节）。
+More than a dozen comments in one config file usually means the file should be split, or the reasoning belongs in a document of its own (section 3).
 
-## 三、写不了就不写
+## 3. When you cannot write a comment
 
-严格 JSON 这类不支持注释的格式，不写注释，也不要用数据字段顶替。这次改动确实有该说明的取值理由时，先读项目里的 `skill-memory/code-comments.md`，定过就照做、不再问；没定过再问一句要不要单独生成一份说明文档：
+For formats that do not support comments, such as strict JSON, write none — and do not smuggle one in as a data field. If this change really carries a value decision worth recording, read `skill-memory/code-comments.md` in the project first: a recorded answer is followed without asking again. With no record, ask once whether to generate a separate document:
 
-- 用户同意：写一份 Markdown，覆盖每项为什么这么设、改了会怎样；位置和文件名由用户定，没指定就放在该文件同目录，命名 `<原文件名>.说明.md`。
-- 用户说不要：到此为止，不生成，也不再问。
-- 没有什么要解释的（纯格式变动、装包版本号的常规升降）：不用问。运行时或工具链的版本下限、锁定的版本、跳过检查的开关，属于要问的取值。
+- User agrees: write a Markdown file covering why each setting is what it is and what changes if it is touched. The user picks the location and the name; given neither, put it next to the file as `<filename>.notes.md`.
+- User declines: stop there, generate nothing, and do not ask again.
+- Nothing to explain (formatting only, routine version bumps): do not ask. Runtime or toolchain minimums, pinned versions and skipped checks are decisions that do deserve the question.
 
-答完把结论写进 `skill-memory/code-comments.md`，没有就新建。
+Write the outcome into `skill-memory/code-comments.md`, creating it when it does not exist.
 
-## 四、别踩的坑
+## 4. Traps
 
-- 不用数据字段顶替注释：`"comment"`、`"//"`、`x-note`、k8s 的 annotation 和 label，工具都会当真实数据，打包或发布时可能带出去。
-- 注释里不写密钥、账号、内网地址，这是配置注释最容易顺手贴上去的东西。
-- 多环境配置写清适用范围：哪个环境、哪台机器、谁维护。
+- Do not stand in for a comment with a data field: `"comment"`, `"//"`, `x-note`, Kubernetes annotations and labels are all read as real data and may ship with the build.
+- No secrets, account names or internal addresses in comments — this is the easiest place to paste them by accident.
+- For multi-environment config, state the scope: which environment, which machine, who maintains it.
 
-## 案例
+## Cases
 
-取值原因
-✗ `// 严格模式`
-✓ `// 存量文件开 strict 会报几百个错，先开 noImplicitAny，新目录再收紧`
+Why this value
+✗ `// strict mode`
+✓ `// strict on existing files reports hundreds of errors; noImplicitAny first, tighten new directories later`
 ✓ `"strict": false,`
-依据：缺的是为什么先关着、什么时候开
+reason: what is missing is why it stays off and when it goes on
 
-版本锁定
+Version pinning
 ✗ `dependencies = ["httpx==0.27.0"]`
-✓ `# 0.28 起改了超时默认值，等业务侧适配完再升`
+✓ `# 0.28 changed the default timeout; upgrade once the callers have adapted`
 ✓ `dependencies = ["httpx==0.27.0"]`
-依据：解锁条件不写，没人敢升
+reason: without the lifting condition nobody dares upgrade
 
-特殊步骤
-✗ `# 安装依赖`
-✓ `# 用 frozen-lockfile 装：防止 CI 改了锁文件却没人发现`
-依据：要补的是为什么这么装
+Unusual steps
+✗ `# install dependencies`
+✓ `# frozen-lockfile: CI must not rewrite the lock file unnoticed`
+reason: what is missing is why it installs this way
 
-写不了的文件
-✗ `package.json` 里加 `"comment": "这个字段不要动"`
-✓ 不写，问一句要不要单独出说明文档，用户说不要就停
-依据：非标准字段会被当数据带出去；说明文档用户点头才生成
+A file that cannot take comments
+✗ adding `"comment": "do not touch this field"` to `package.json`
+✓ write nothing, ask once about a separate document, stop if the user says no
+reason: non-standard fields ship as data, and the document is only produced on a yes
 
-代码形式的配置
-✗ `prettier.config.mjs` 里写 `// prettier 配置`
-✓ `/** @type {import('prettier').Config} */` 放在导出对象上方，字段上方写 `// 与后端模板保持一致，改动会波及生成的代码`
-依据：这类文件既是配置也是源码，取值原因按配置写，导出声明用块注释让编辑器校验字段
+Config written as code
+✗ `// prettier config` in `prettier.config.mjs`
+✓ `/** @type {import('prettier').Config} */` above the exported object, then `// kept in step with the backend template; changes ripple into generated code` above the field
+reason: these files are both config and source — value reasoning follows the config rules, while the export takes a block comment so the editor can check its fields

@@ -1,25 +1,25 @@
-# 函数与类
+# Functions and classes
 
-管函数形态、参数设计和类与继承的取舍。控制流与值见 [control-flow-and-values.md](control-flow-and-values.md)，异步见 [async-and-errors.md](async-and-errors.md)。
+Covers function form, parameter design, and the tradeoff between classes and inheritance. Control flow and values are in [control-flow-and-values.md](control-flow-and-values.md), async work in [async-and-errors.md](async-and-errors.md).
 
-## 函数形态
+## Function form
 
-默认写箭头函数：不绑自己的 `this`，回调里不用再 `bind`。这几种写 `function`：
+Arrow functions are the default: they do not bind their own `this`, so callbacks need no `bind`. Write `function` in these cases:
 
-| 情况 | 原因 |
+| Case | Why |
 | --- | --- |
-| 类的方法 | 挂在原型上，子类能 `super` 调用 |
-| 需要动态 `this`（含显式 `this` 参数） | 箭头函数的 `this` 由定义位置决定 |
-| 生成器 `function*` | 箭头函数没有生成器语法 |
-| 构造函数 | 需要 `new` 和 `this` |
-| 依赖函数声明提升 | 调用点在定义之前，箭头函数会报暂时性死区 |
+| Class methods | They live on the prototype, so a subclass can call `super` |
+| Anything needing a dynamic `this`, including an explicit `this` parameter | An arrow function takes `this` from where it is defined |
+| Generators, `function*` | Arrow functions have no generator syntax |
+| Constructors | They need `new` and `this` |
+| Code relying on function declaration hoisting | The call site comes before the definition, and an arrow function hits the temporal dead zone |
 
-递归函数写成命名函数表达式，栈里能看到名字，排查时不用靠行号猜。
+Write a recursive function as a named function expression, so the name shows up in a stack trace instead of being guessed from a line number.
 
-不为「统一」重写存量函数的形态：类方法改成箭头字段后挂在实例上，子类覆盖不到，`super` 也调不着；`this` 敏感的改写容易引入行为差异。
+Do not rewrite the form of existing functions for the sake of consistency: a class method turned into an arrow property sits on the instance, where a subclass cannot override it and `super` cannot reach it, and a `this`-sensitive rewrite tends to change behavior.
 
 ```js
-const formatPrice = (cents) => `¥${(cents / 100).toFixed(2)}`;
+const formatPrice = (cents) => `$${(cents / 100).toFixed(2)}`;
 
 class OrderStore {
   #orders = [];
@@ -36,38 +36,40 @@ export function* walkTree(node) {
   for (const child of node.children) yield* walkTree(child);
 }
 
-// ✗ 类方法写成箭头字段：挂在实例上，子类覆盖不到，super 也调不着
+// Wrong: a class method written as an arrow property. It sits on the instance,
+// a subclass cannot override it, and super cannot reach it.
 class BadStore {
   #orders = [];
   add = (order) => { this.#orders.push(order); };
 }
 ```
 
-## 参数设计
+## Parameter design
 
-- 参数按调用方最稳定到最易变排列，可选参数放后面。
-- 超过 3 个参数改成对象参数，调用点能看清每个值是什么。
-- 布尔参数会让调用点读不出含义，拆成两个函数或换成取值参数。
-- 默认值用默认参数，不用 `||` 兜底：`(limit = 10)` 能保住调用方传进来的 `0`。
+- Order parameters from the most stable to the most volatile for the caller, with optional ones last.
+- Past three parameters, switch to an options object so the call site shows what each value is.
+- A boolean parameter hides its meaning at the call site; split it into two functions or use a value parameter.
+- Use default parameters rather than `||` as a fallback: `(limit = 10)` keeps a `0` the caller passed in.
 
 ```js
-// 第三个 true 是什么，只有翻实现才知道。
+// What the third true means is only visible inside the implementation.
 fetchList(page, size, true);
 
-// 换成取值参数，调用点自己解释自己。
+// A value parameter explains itself at the call site.
 fetchList(page, size, { includeArchived: true });
 ```
 
-## 类的取舍
+## Choosing a class
 
-- 继承只表达「是一个」；单纯复用代码用组合或注入策略。两种实现只是共享一段流程时，把变化的那段参数化。
-- 父类只放真实共性，不判断自己有哪些子类，也不导入子类；只有部分子类具有的行为放子类或抽成策略。
-- 子类重写保持父类的签名和约定，行为和父类不同就在旁边写一句说明。
-- 改父类的方法、构造参数或 `protected` 成员前，先找出所有子类和重写点。
-- 不拿 getter / setter 做隐式副作用；要计算就写成有名字的方法。
+- Inheritance expresses "is a"; plain code reuse uses composition or an injected strategy. When two implementations only share a flow, parameterize the part that changes.
+- A parent class holds real commonality only: it never asks which subclasses it has and never imports them, and behavior only some subclasses need lives there or in a strategy.
+- An override keeps the parent's signature and contract, and a behavior difference gets a line of explanation next to it.
+- Before changing a parent method, a constructor parameter or a `protected` member, find every subclass and override.
+- Do not hide side effects in a getter or setter; when something has to be computed, give it a named method.
 
 ```js
-// ✗ 父类按子类类型分流，加一种导出格式就要回来改父类
+// Wrong: the parent branches on the subclass type, so a new export format
+// means coming back to edit the parent.
 class ExportJob {
   run(rows) {
     if (this.format === "csv") return toCsv(rows);
@@ -76,7 +78,7 @@ class ExportJob {
   }
 }
 
-// ✓ 复用靠注入，ExportJob 不认识具体格式
+// Right: reuse through injection, and ExportJob knows no concrete format.
 const createExportJob = ({ toBuffer }) => ({
   run: (rows) => toBuffer(rows),
 });

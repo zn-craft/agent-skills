@@ -1,12 +1,12 @@
-# React 版本核对
+# Checking the React version
 
-用到版本相关的 API 时，先从锁文件确认实际安装的 `react`、`react-dom` 和 `@types/react`。再核对对应版本的官方发布说明、API 文档和框架支持。官网默认展示最新文档。
+Before using a version-dependent API, confirm the installed `react`, `react-dom` and `@types/react` in the lock file. Then check the release notes, the API documentation and the framework's support for that version. The official site shows the latest docs by default.
 
-## 常见差异
+## Common differences
 
-- 函数组件转发 `ref` 时，React 18 通常用 `forwardRef`，React 19 可直接接收 `ref` Prop。组件库还要考虑支持的最低版本和类型声明。
-- `useEffectEvent` 从 React 19.2 起稳定可用。使用条件见 [状态与 Effect](state-and-effects.md)。
-- Fragment ref 从 React 19.3 起稳定可用。需要操作一组兄弟 DOM 节点时，用显式的 `<Fragment ref={...}>`。
-- RSC、Server Functions 和相关缓存行为看框架版本及配置。React Compiler 则确认插件已启用，且目标文件确实经过编译。
+- Forwarding `ref` out of a function component usually means `forwardRef` on React 18, while React 19 accepts `ref` as a Prop. A component library also weighs the oldest version it supports and its type declarations.
+- `useEffectEvent` is stable from React 19.2. For when to use it, see [state and Effects](state-and-effects.md).
+- Fragment refs are stable from React 19.3. Use an explicit `<Fragment ref={...}>` when a group of sibling DOM nodes has to be reached.
+- RSC, Server Functions and the caching that goes with them depend on the framework version and configuration, while the React Compiler needs its plugin enabled and the file in question actually compiled.
 
-其他 API 查对应发布说明。若 API 还处于实验阶段，先确认项目是否明确采用对应渠道。
+Look up the matching release notes for other APIs. An experimental API first requires confirming that the project has deliberately opted into that channel.

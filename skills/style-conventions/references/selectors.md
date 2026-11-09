@@ -1,58 +1,59 @@
-# 选择器特异性
+# Selector specificity
 
-判据：看一眼选择器，就能说出它能不能覆盖目标样式。
+The test: one look at a selector tells you whether it can override the target style.
 
-## 用 @layer 决定顺序
+## Let @layer decide the order
 
-层顺序声明一次，谁覆盖谁就固定了，不用靠选择器较劲。
+Declare the layer order once and who overrides whom is settled, without fighting through selectors.
 
 ```css
-/* 顺序写在一处，之后各层各写各的 */
+/* The order is stated in one place, and each layer then keeps to itself */
 @layer reset, tokens, base, vendors, components, utilities;
 
 @layer reset {
-  /* :where() 特异性是 0-0-0，组件永远压得过它 */
+  /* :where() has 0-0-0 specificity, so a component always wins over it */
   :where(h1, h2, h3, p) { margin: 0; }
 }
 ```
 
-`!important` 会把层的顺序倒过来，先声明的层反而压过后声明的层。层里不用它抢优先级。
+`!important` reverses the layer order, letting an earlier layer beat a later one. Layers do not use it to win.
 
-不支持 `@layer` 的老内核（部分小程序 WebView、旧版浏览器）改用引入顺序加 `:where()`。
+Older engines without `@layer` (some mini program webviews, old browsers) use import order plus `:where()` instead.
 
-## 选择器保持扁平
+## Keep selectors flat
 
 ```css
-/* ✗ 0-3-1，后来的人只能继续叠特异性和 !important */
+/* Wrong: 0-3-1, so the next person can only pile on specificity and !important */
 .page .card > div .title { color: #1d4ed8; }
 
-/* ✓ 0-1-0，需要变体再加一个类 */
+/* Right: 0-1-0, and a variant adds one more class */
 .cardTitle { color: var(--color-link); }
 ```
 
-类超过两个、或者靠父子结构描述层级，通常是在用结构判断该不该生效，这类判断交给类名；确实只在父级里成立的子元素，按下面嵌套那节处理。
+More than two classes, or hierarchy described through parent-child structure, usually means the structure is deciding whether a rule applies; that decision belongs in a class name. A child that genuinely only makes sense inside its parent follows the nesting rule below.
 
-## 嵌套只接状态和强关联的子元素
+## Nest only states and strongly bound children
 
 ```css
-/* ✓ 状态挂在基础类下，逻辑内聚 */
+/* Right: states hang off the base class, keeping the logic together */
 .btn {
   color: var(--color-text);
   &:hover { color: var(--color-link); }
   &.isLoading { opacity: 0.6; }
 }
 
-/* ✓ 只在卡片里成立、离开父级就没意义的装饰，浅嵌一层 */
+/* Right: decoration that only holds inside the card nests one level */
 .card {
   color: var(--color-text);
   .cardIcon { color: currentColor; }
 }
 
-/* ✗ 缩进整个结构，编译出 .menu .item .link，特异性自己涨上去 */
+/* Wrong: indenting the whole structure compiles to .menu .item .link, and the
+   specificity climbs on its own */
 ```
 
-子元素在别处也会独立用到时，给它自己的类，不缩进父级。结构上最多保留「父 > 子」两级，加上伪类或修饰符，整条选择器链不超过三层；再深就说明组件该拆，或职责放错了。
+When a child is also used on its own elsewhere, it gets its own class instead of being indented under the parent. Structurally, at most two levels of parent > child survive, plus a pseudo-class or modifier, keeping the whole chain within three; deeper than that means the component should be split or a responsibility sits in the wrong place.
 
-## 覆盖的三条出口
+## Three exits for overriding
 
-按顺序试：加一个修饰符类 → 用组件暴露的变量 → 放进更高的 `@layer`。三条都走不通说明样式归属放错了，回去改结构。压的是第三方库或行内样式这类够不着的地方时，按硬约束里的例外用 `!important`，并注明原因。
+Try them in order: add a modifier class, use a variable the component exposes, then move into a higher `@layer`. If none works, the style's ownership is wrong and the structure needs fixing. When what has to be overridden is out of reach, such as a library's internal styles or an inline style, the exception in the hard constraints applies: use `!important` and state why.

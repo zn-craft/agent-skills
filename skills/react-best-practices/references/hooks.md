@@ -1,39 +1,39 @@
-# 自定义 Hooks
+# Custom Hooks
 
-## 调用规则
+## Call rules
 
-- 自定义 Hook 用 `use` 加大写字母开头，例如 `useSelection`。
-- 普通 Hooks 必须在函数组件或自定义 Hook 的顶层调用，放在所有可能提前返回的分支之前。
-- 调用顺序必须在每次渲染中一致；不要用注释关闭 Hooks lint 绕过问题。
-- React `use` API 有独立规则，不要把普通 Hooks 的全部限制机械套用到它。
+- Custom Hooks start with `use` followed by a capital letter, such as `useSelection`.
+- Ordinary Hooks are called at the top level of a function component or another custom Hook, ahead of any branch that may return early.
+- The call order stays the same on every render; never disable the Hooks lint rule with a comment to get around a problem.
+- React's `use` API has its own rules; do not apply every restriction of ordinary Hooks to it by reflex.
 
-如果隐藏面板时要保留草稿，把提前返回放到 `useState` 后面。这里假设调用方只是切换 `visible`，组件始终挂载。
+When a hidden panel must keep its draft, put the early return after `useState`. The example assumes the caller only toggles `visible` and the component stays mounted.
 
 ```tsx
 const EditPanel = ({ visible }: { visible: boolean }) => {
   const [draft, setDraft] = useState("");
   if (!visible) return null;
-  return <input aria-label="草稿" value={draft} onChange={(e) => setDraft(e.currentTarget.value)} />;
+  return <input aria-label="Draft" value={draft} onChange={(e) => setDraft(e.currentTarget.value)} />;
 };
 
 export { EditPanel };
 ```
 
-## 何时抽取
+## When to extract one
 
-- 逻辑有独立领域语义、状态生命周期、外部订阅 / 副作用或明确复用需求时，考虑抽取。
-- 纯计算用普通函数；重复 UI 用组件；不要只为缩短文件或包一层 `useState` 而抽 Hook。
-- 每次 Hook 调用拥有独立状态；调用同一个 Hook 不会自动共享状态。
+- Extract when the logic has its own domain meaning, state lifecycle, external subscription or side effect, or a clear reuse case.
+- Pure computation stays a plain function and repeated UI stays a component; do not create a Hook only to shorten a file or wrap `useState`.
+- Each Hook call owns its own state; calling the same Hook twice does not share anything.
 
-## 参数与返回值
+## Parameters and return value
 
-- 参数较多或存在可选配置时优先具名对象；少量且语义清楚时可用位置参数。
-- 单一值及 setter 可返回元组；多个状态和动作通常返回具名对象。
-- 同一个 Hook 在加载、成功和失败等状态下保持返回结构一致，例如始终返回 `{ status, data, error }`，由字段值表达差异。
-- Hook 通常返回数据和操作，不返回 JSX。
-- 返回对象每次重建不自动构成问题；只有引用稳定性造成可验证影响时才考虑缓存。
-- `useMemo` / `useCallback` 是优化工具，不用于建立业务正确性或持久身份保证。
+- Prefer a named options object when there are several parameters or optional configuration; positional arguments are fine for a few obvious ones.
+- A single value and its setter may return a tuple; several values and actions usually return a named object.
+- One Hook keeps the same return shape across loading, success and failure, for example always returning `{ status, data, error }` and expressing the difference in the field values.
+- Hooks return data and actions, not JSX.
+- A return object rebuilt on every render is not a problem by itself; consider caching only when reference stability has a measurable effect.
+- `useMemo` and `useCallback` are optimization tools, not a way to establish correctness or a stable identity for business logic.
 
-## 浏览器与 SSR
+## Browser and SSR
 
-项目使用 SSR / SSG 时，读取浏览器状态需遵循 [ssr-and-hydration.md](ssr-and-hydration.md)。不要在 Hook 初始化或渲染阶段假设 `window`、`navigator`、`localStorage` 一定存在。
+With SSR or SSG, reading browser state follows [ssr-and-hydration.md](ssr-and-hydration.md). Never assume `window`, `navigator` or `localStorage` exists during Hook initialization or rendering.
