@@ -2,92 +2,40 @@
 
 # Agent Skills
 
-A collection of reusable Agent Skills. Every skill is a self-contained directory with a `SKILL.md` plus the scripts, references, and assets it actually needs.
+A collection of reusable Agent Skills. Every skill is a standalone directory with a `SKILL.md` plus the scripts, references, and templates it actually uses, so you install one at a time instead of cloning the whole repository.
 
-Two design goals:
+## Install
 
-1. **Install one skill at a time**: users install only the skill they need, without cloning the whole repository.
-2. **Zero runtime dependencies**: skill directories are self-contained and work as soon as they are installed.
-
-See [ROADMAP.en.md](ROADMAP.en.md) for the layered architecture, how the skills work together, and the expansion plan.
-
-## Repository layout
-
-```text
-agent-skills/
-├── skills/                        # All skills live here; the only place you maintain day to day
-│   └── <skill-name>/
-│       ├── SKILL.md               # Required: frontmatter(name/description) + instructions
-│       ├── agents/                # Optional: openai.yaml (display name, default prompt, invocation policy)
-│       ├── scripts/               # Optional: executable scripts
-│       ├── references/            # Optional: docs loaded on demand
-│       └── assets/                # Optional: templates, icons, and other output files
-├── templates/skill/               # Scaffold for new skills
-├── scripts/
-│   ├── new-skill.mjs              # Generate a skill skeleton
-│   ├── validate-skills.mjs        # Validate every skill
-│   ├── score-skills.mjs           # Score skills (merge gate, 8.5)
-│   ├── build-roadmap-diagrams.mjs # Generate the ROADMAP figures (Chinese and English)
-│   ├── install-skill.sh           # Install one skill into any agent (macOS / Linux / WSL / Git Bash)
-│   └── install-skill.ps1          # Install one skill into any agent (Windows PowerShell)
-├── .github/workflows/             # Validation and scoring run automatically on push and PR
-├── docs/                          # ROADMAP figures, Chinese and English
-├── AGENTS.md                      # Repository conventions for AI agents
-├── ROADMAP.md                     # Layered architecture, how skills work together, expansion plan
-├── ROADMAP.en.md                  # Same, in English
-├── CONTRIBUTING.md                # How to add a skill (Chinese)
-└── CONTRIBUTING.en.md             # How to add a skill
-```
-
-## Installing a single skill
-
-A skill is just a set of files; put it in an agent's skills directory and it takes effect there. Pick either of the two options below.
-
-`<skill-name>` below is a placeholder: replace it with a real skill name such as `js-module-structure`, and do not type the angle brackets.
-
-### Option 1: npx skills add (recommended)
-
-Requires Node 18+. Nothing to clone, and no need to work out where the files go:
+Install one skill (Node 18+ required):
 
 ```bash
-# interactive: pick a skill, then pick the target agent
-npx skills add zn-craft/agent-skills
-
-# one specific skill; -g installs at the user level
-npx skills add zn-craft/agent-skills --skill <skill-name> -g
+npx skills add zn-craft/agent-skills --skill js-module-structure -g
 ```
 
-Without `--skill`, the CLI lists the repository's skills and lets you pick. `-g` installs into your user-level directory so every project on the machine can use it; omit it to affect only the current project. See `npx skills add --help` for the remaining flags.
+`-g` installs at the user level so every project on the machine can use it; without it the skill goes into the current project only. Leave out `--skill` to list the available skills and pick one.
 
-### Option 2: script install (install-skill)
-
-Use this when you would rather not install Node, or you need to point at a destination directory yourself. Nothing to clone here either.
+No Node, or need to choose the destination directory yourself? Use the install script:
 
 ```bash
-# macOS / Linux / WSL / Git Bash: install into claude's user-level directory
-curl -fsSL https://raw.githubusercontent.com/zn-craft/agent-skills/main/scripts/install-skill.sh | bash -s -- <skill-name> --agent claude
+curl -fsSL https://raw.githubusercontent.com/zn-craft/agent-skills/main/scripts/install-skill.sh | bash -s -- js-module-structure --agent claude
 ```
+
+`--agent` picks the target, and `codex`, `claude`, and `cursor` all work; the default destination is that agent’s user-level directory. Add `--project` to install into the current project, `--dest` for an explicit directory, or `--force` to replace an existing install. With neither `--agent` nor `--dest` the script exits with an error; there is no default agent.
+
+On Windows, `scripts/install-skill.ps1` takes the same flags:
 
 ```powershell
-# Windows PowerShell (the built-in powershell.exe is enough)
 iwr https://raw.githubusercontent.com/zn-craft/agent-skills/main/scripts/install-skill.ps1 -OutFile $env:TEMP\install-skill.ps1
-powershell -ExecutionPolicy Bypass -File $env:TEMP\install-skill.ps1 <skill-name> -Agent claude
+powershell -ExecutionPolicy Bypass -File $env:TEMP\install-skill.ps1 js-module-structure -Agent claude
 ```
 
-That is the whole flag set:
+A downloaded `.ps1` carries the mark-of-the-web and execution policies such as RemoteSigned block it; `-ExecutionPolicy Bypass` applies to that run only, or run `Unblock-File` once.
 
-- `--agent <name>`: the target agent, such as `codex`, `claude`, or `cursor`.
-- `--global` / `--project`: used with `--agent`. Global (the default) lands in `$<NAME>_HOME/skills`, falling back to `~/.<name>/skills`; project lands in `./.<name>/skills` under the current directory.
-- `--dest <dir>`: an explicit destination, mutually exclusive with `--global`/`--project`.
-- `--force`: replaces an existing installation after backing it up to `<name>.bak.<timestamp>`.
-
-With neither `--agent` nor `--dest`, the script exits with an error; there is no default agent. A downloaded `.ps1` carries the mark-of-the-web, so execution policies such as RemoteSigned block it; `-ExecutionPolicy Bypass` applies to that single run only, and running `Unblock-File` once is the equivalent.
-
-From a clone, run `bash scripts/install-skill.sh <skill-name> --agent claude` (or `.\scripts\install-skill.ps1 <skill-name> -Agent claude`) with the same flags.
+From a clone, run `bash scripts/install-skill.sh js-module-structure --agent claude`.
 
 ## Available skills
 
-When you add a skill, register it in this table so users can find it. The description column copies the skill's own `description`; when you change it, sync this table and the matching row in [README.md](README.md).
+Register new skills here: the description column copies the skill’s own `description`, and this table and [README.md](README.md) change together.
 
 | Skill | Description | Install |
 | --- | --- | --- |
@@ -103,38 +51,11 @@ When you add a skill, register it in this table so users can find it. The descri
 
 ```bash
 node scripts/new-skill.mjs my-skill --resources references
+node scripts/validate-skills.mjs
+node scripts/score-skills.mjs skills/my-skill
 ```
 
-Then:
-
-1. Fill in the TODOs in `skills/my-skill/SKILL.md` (the scaffold deliberately leaves TODOs; validation fails while they remain).
-2. Validate: `node scripts/validate-skills.mjs`.
-3. Score it: `node scripts/score-skills.mjs skills/my-skill`, then follow the reported items until it clears 8.5.
-4. Copy the `description` into the table above and the matching row in [README.md](README.md).
-
-The full conventions live in [CONTRIBUTING.en.md](CONTRIBUTING.en.md).
-
-## Validation
-
-```bash
-node scripts/validate-skills.mjs             # validate every skill under skills/
-node scripts/validate-skills.mjs skills/foo  # validate a single skill
-```
-
-It checks that frontmatter declares `name`/`description`, that `name` matches the directory name, that no placeholder text is left in the body, that the README description column matches the skill's own `description`, and that no symlinks or extra documents leaked into a skill directory. GitHub Actions runs the same checks on push and pull requests.
-
-Requires Node 18+; there are no other dependencies.
-
-## Scoring
-
-```bash
-node scripts/score-skills.mjs                  # score every skill under skills/
-node scripts/score-skills.mjs skills/foo       # score one skill
-node scripts/score-skills.mjs --changed main   # score only skills changed against main
-node scripts/score-skills.mjs --json           # machine-readable output
-```
-
-Scores run from 0 to 10 across six dimensions: structure and conventions 1.5, description and triggering 1.5, progressive disclosure and routing 2, actionability and examples 2, conciseness 2, independence and portability 1. Every deduction names the file, line, and reason, and the report also lists file count, size, and estimated tokens.
+Fill in the TODOs the scaffold leaves in `SKILL.md`, get validation to zero errors and the score to at least 8.5, then add a row to both README tables. The full conventions live in [CONTRIBUTING.en.md](CONTRIBUTING.en.md).
 
 ## License
 

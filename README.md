@@ -2,92 +2,40 @@
 
 # Agent Skills
 
-可复用的 Agent Skill 集合。每个 skill 是一个独立目录，包含一份 `SKILL.md`，以及它实际需要的脚本、参考资料和资源文件。
+可复用的 Agent Skill 集合。每个 skill 是一个独立目录，自带 `SKILL.md` 和它真正用到的脚本、参考文档与模板，按单条安装，不用克隆整个仓库。
 
-两个设计目标：
+## 安装
 
-1. **按单条安装**：使用者只装自己需要的那一个 skill，不需要克隆整个仓库。
-2. **零依赖使用**：skill 目录自包含，装到本地即可用。
-
-分层架构、skill 之间的协作方式与扩展计划见 [ROADMAP.md](ROADMAP.md)。
-
-## 目录结构
-
-```text
-agent-skills/
-├── skills/                        # 所有沉淀的 skill，唯一需要日常维护的地方
-│   └── <skill-name>/
-│       ├── SKILL.md               # 必需：frontmatter(name/description) + 指令正文
-│       ├── agents/                # 可选：openai.yaml（界面名称、默认提示词、调用策略）
-│       ├── scripts/               # 可选：可执行脚本
-│       ├── references/            # 可选：按需加载的补充文档
-│       └── assets/                # 可选：产出要用的模板、图标等文件
-├── templates/skill/               # 新建 skill 的脚手架
-├── scripts/
-│   ├── new-skill.mjs              # 生成 skill 骨架
-│   ├── validate-skills.mjs        # 校验所有 skill
-│   ├── score-skills.mjs           # 给 skill 打分（合入门禁，8.5 分）
-│   ├── build-roadmap-diagrams.mjs # 生成 ROADMAP 里的配图（中英各一套）
-│   ├── install-skill.sh           # 安装单条 skill 到任意 agent（macOS / Linux / WSL / Git Bash）
-│   └── install-skill.ps1          # 安装单条 skill 到任意 agent（Windows PowerShell）
-├── .github/workflows/             # 提交后自动校验与评分
-├── docs/                          # ROADMAP 的配图，中英各一套
-├── AGENTS.md                      # 给 AI agent 的仓库约定
-├── ROADMAP.md                     # 分层架构、协作方式与扩展路线
-├── ROADMAP.en.md                  # 同上（英文）
-├── CONTRIBUTING.md                # 新增 skill 的流程
-└── CONTRIBUTING.en.md             # 新增 skill 的流程（英文）
-```
-
-## 安装单条 skill
-
-Skill 就是一组文件，放到哪个 agent 的 skills 目录，就在哪个 agent 生效。下面两种方式任选。
-
-下面的 `<skill-name>` 是占位符，换成实际 skill 名，例如 `js-module-structure`；尖括号本身不要输入（Windows PowerShell 里 `<` 是保留的重定向符号，写了会直接报语法错误）。
-
-### 方式一：npx skills add（推荐）
-
-需要 Node 18+。不用克隆仓库，也不用自己找落点目录：
+装指定的一条，需要 Node 18+：
 
 ```bash
-# 交互式：先挑 skill，再挑目标 agent
-npx skills add zn-craft/agent-skills
-
-# 装指定的一条；-g 表示用户级安装
-npx skills add zn-craft/agent-skills --skill <skill-name> -g
+npx skills add zn-craft/agent-skills --skill js-module-structure -g
 ```
 
-省略 `--skill` 时会把仓库里的 skill 列出来让你挑。`-g` 装进用户级目录，这台机器上的所有项目都能用；不加则只影响当前项目。其它参数看 `npx skills add --help`。
+`-g` 装到用户级目录，这台机器上的所有项目都能用；不加则只装进当前项目。不写 `--skill` 会列出全部 skill 让你挑。
 
-### 方式二：脚本安装（install-skill）
-
-不想装 Node，或者要自己指定落点目录时用这个。脚本同样不需要先克隆仓库。
+不想装 Node，或者要自己指定落点目录，用安装脚本：
 
 ```bash
-# macOS / Linux / WSL / Git Bash：装到 claude 的用户级目录
-curl -fsSL https://raw.githubusercontent.com/zn-craft/agent-skills/main/scripts/install-skill.sh | bash -s -- <skill-name> --agent claude
+curl -fsSL https://raw.githubusercontent.com/zn-craft/agent-skills/main/scripts/install-skill.sh | bash -s -- js-module-structure --agent claude
 ```
+
+`--agent` 指定装给哪个 agent，`codex`、`claude`、`cursor` 都行，默认落点是该 agent 的用户级目录；加 `--project` 装进当前项目，`--dest` 直接指定目录，`--force` 覆盖已装的版本。`--agent` 和 `--dest` 都不给会报错退出，脚本没有默认 agent。
+
+Windows 用 `scripts/install-skill.ps1`，参数一样：
 
 ```powershell
-# Windows PowerShell（系统自带的 powershell.exe 就够）
 iwr https://raw.githubusercontent.com/zn-craft/agent-skills/main/scripts/install-skill.ps1 -OutFile $env:TEMP\install-skill.ps1
-powershell -ExecutionPolicy Bypass -File $env:TEMP\install-skill.ps1 <skill-name> -Agent claude
+powershell -ExecutionPolicy Bypass -File $env:TEMP\install-skill.ps1 js-module-structure -Agent claude
 ```
 
-参数只有这几个：
+下载来的 `.ps1` 带网络标记，会被 RemoteSigned 之类的执行策略挡下；`-ExecutionPolicy Bypass` 只对这一次运行生效，或者先跑一次 `Unblock-File`。
 
-- `--agent <名字>`：目标 agent，例如 `codex`、`claude`、`cursor`。
-- `--global` / `--project`：跟 `--agent` 搭配。全局（默认）装进 `$<NAME>_HOME/skills`，环境变量没设就用 `~/.<name>/skills`；项目装进当前目录下的 `./.<name>/skills`。
-- `--dest <目录>`：直接指定落点，和 `--global`/`--project` 互斥。
-- `--force`：覆盖已装版本，会先备份成 `<name>.bak.<时间戳>`。
-
-`--agent` 和 `--dest` 都不给就直接报错，脚本没有默认 agent。下载来的 `.ps1` 带网络标记，会被 RemoteSigned 之类的执行策略挡下，`-ExecutionPolicy Bypass` 只对这一次运行生效；等价做法是先跑一次 `Unblock-File`。
-
-克隆过仓库就直接跑 `bash scripts/install-skill.sh <skill-name> --agent claude`（PowerShell 是 `.\scripts\install-skill.ps1 <skill-name> -Agent claude`），参数一样。
+克隆过仓库的话，直接跑 `bash scripts/install-skill.sh js-module-structure --agent claude`。
 
 ## 已收录的 skill
 
-新增 skill 后，请在这里登记一行，方便使用者查找。说明列抄该 skill 的 `description`，改了 `description` 就同步这里和 [README.en.md](README.en.md) 的对应行。
+新增 skill 后在这里登记一行，说明列抄该 skill 的 `description`；`description` 改了，本表和 [README.en.md](README.en.md) 要一起改。
 
 | Skill | 说明 | 安装 |
 | --- | --- | --- |
@@ -103,38 +51,11 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\install-skill.ps1 <skill-name
 
 ```bash
 node scripts/new-skill.mjs my-skill --resources references
+node scripts/validate-skills.mjs
+node scripts/score-skills.mjs skills/my-skill
 ```
 
-然后：
-
-1. 补全 `skills/my-skill/SKILL.md` 里的 TODO（脚手架故意留了 TODO，校验不通过说明还没写完）。
-2. 校验：`node scripts/validate-skills.mjs`。
-3. 打分：`node scripts/score-skills.mjs skills/my-skill`，低于 8.5 分先按提示改。
-4. 把 `description` 抄进上方表格和 [README.en.md](README.en.md) 的对应行。
-
-更完整的约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
-## 校验
-
-```bash
-node scripts/validate-skills.mjs             # 校验 skills/ 下全部 skill
-node scripts/validate-skills.mjs skills/foo  # 只校验一个
-```
-
-校验内容：frontmatter 的 `name`/`description` 是否齐全、`name` 是否与目录名一致、正文是否有未完成的占位内容、README 的说明列是否与 `description` 一致、是否混入符号链接或附属文档。仓库的 GitHub Actions 会在 push 和 PR 时自动跑同一套校验。
-
-需要 Node 18+，没有其它依赖。
-
-## 评分
-
-```bash
-node scripts/score-skills.mjs                  # 给 skills/ 下全部 skill 打分
-node scripts/score-skills.mjs skills/foo       # 只打分一个
-node scripts/score-skills.mjs --changed main   # 只打分相对 main 有改动的 skill
-node scripts/score-skills.mjs --json           # 机器可读结果
-```
-
-满分 10 分，按六个维度扣减：结构与规范 1.5、description 与触发 1.5、渐进披露与路由 2、可执行性与案例 2、精简与去重 2、独立与可移植 1。每条扣分都带文件、行号和原因，输出里还给出文件数、体积和 token 估算。
+补全脚手架在 `SKILL.md` 里留的 TODO，校验零错误、评分不低于 8.5，然后在两份 README 的表格里各加一行。完整约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## License
 
