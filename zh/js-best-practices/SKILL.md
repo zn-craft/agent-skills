@@ -1,6 +1,6 @@
 ---
 name: js-best-practices-zh
-description: 规定命名、函数形态（默认箭头函数）、控制流与值处理、集合用法、异步与错误处理，以及类与继承、循环与缓存的取舍。写、改或评审 JS/TS 代码时使用。不负责 TypeScript 类型建模、模块目录与框架组件，以及构建和 lint 配置。
+description: 规定命名、函数形态（默认箭头函数）、控制流与值处理、集合用法、异步与错误处理，以及类与继承、循环、内存分配与缓存的取舍。写、改或评审 JS/TS 代码时使用。不负责 TypeScript 类型建模、模块目录与框架组件，以及构建和 lint 配置。
 ---
 
 # JavaScript 最佳实践
@@ -45,7 +45,7 @@ description: 规定命名、函数形态（默认箭头函数）、控制流与�
 
 ## 默认档的例外
 
-- 性能：以测量结果为准。热点多半是循环里反复查找、同一份数据算好几趟、只判有无却走完整趟，处理方式见 [performance.md](references/performance.md)。
+- 性能：以测量结果为准。热点多半是循环里反复查找、同一份数据算好几趟、只判有无却走完整趟，以及高频分配或长期持有对象；处理方式见 [performance.md](references/performance.md)。
 - 相邻代码的一致性：就地修改的存量函数跟着周围写法走，不顺手重写。
 - 第三方接口的形状：对方只收回调式 API，或参数顺序另有约定。
 
@@ -62,7 +62,7 @@ description: 规定命名、函数形态（默认箭头函数）、控制流与�
 | 数字与日期精度、字符串处理、相等判断、深拷贝 | [values-and-numbers.md](references/values-and-numbers.md) |
 | 排序去重、属性存在性、`Map` 还是对象 | [objects-and-collections.md](references/objects-and-collections.md) |
 | 引入方式、整包导入与产物大小 | [imports.md](references/imports.md) |
-| 循环里反复查找、一趟算完、提前结束、缓存取舍 | [performance.md](references/performance.md) |
+| 循环里反复查找、一趟算完、提前结束、内存分配与对象生命周期、缓存取舍 | [performance.md](references/performance.md) |
 | 并发、失败怎么接、收尾、抛错与记录 | [async-and-errors.md](references/async-and-errors.md) |
 
 ## 需要用户拍板时

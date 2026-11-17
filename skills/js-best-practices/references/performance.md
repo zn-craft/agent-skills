@@ -1,6 +1,6 @@
 # Performance tradeoffs
 
-Covers structural choices around loops and lookups: when a structure is worth changing, and what common hot spots look like. Container choice is in [objects-and-collections.md](objects-and-collections.md), copy cost in [values-and-numbers.md](values-and-numbers.md).
+Covers structural choices around loops, lookups and memory allocation: when a structure is worth changing, and what common hot spots look like. Container choice is in [objects-and-collections.md](objects-and-collections.md), copy cost in [values-and-numbers.md](values-and-numbers.md).
 
 ## Measure before changing
 
@@ -68,9 +68,17 @@ const hasBlocked = users.some((user) => user.blocked);
 
 Do not rebuild a regular expression, re-parse a date or call `JSON.parse` again inside the body, and do not compute the same chained property access twice; hoist it into a variable outside the loop. This change also waits for confirmation that the spot is hot, otherwise it only adds a variable.
 
+## Memory and allocation
+
+Change allocation behavior after allocation profiling confirms a hot spot, then check creation frequency, lifetime and what still references the objects.
+
+- An object created by the current function may be mutated or reused when it is not returned, stored in an external structure or used across an async boundary. In a hot loop, when `{ ...largeObject }` only creates a temporary copy for local calculation, a reset or a few field overrides, read the fields directly or reuse a local object; keep the copy when the function must return a new value.
+- Use an object pool only for objects that allocation profiling shows are created frequently and that have a fixed shape, a controlled lifetime and complete reset logic. Cap the pool, return objects through `release` on every path; `release` resets every field and clears object references, and overflow is discarded.
+- Event listeners, subscriptions, timers and requests extend object lifetimes. Remove, unsubscribe, clear or abort them when they end.
+
 ## A cache needs its invalidation condition first
 
-A cache trades memory and staleness risk for time: add one when the input is stable, the call repeats often and a single result is genuinely expensive, and write the key together with the invalidation condition. A cache without one ends up serving stale data.
+A cache trades memory and staleness risk for time: add one when the input is stable, the call repeats often and a single result is genuinely expensive, and write the key, size bound and invalidation condition together. A cache without one ends up serving stale data.
 
 ## Merge repeated IO
 

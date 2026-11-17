@@ -1,6 +1,6 @@
 ---
 name: js-best-practices
-description: JavaScript language-level style and structure decisions. Use when writing, changing or reviewing JS/TS code. Covers naming, function form, control flow, collections, async style and error handling, plus the tradeoffs in classes, inheritance, loops and caching. Does not cover TypeScript type modeling, module layout, framework components or build and lint config.
+description: JavaScript language-level style and structure decisions. Use when writing, changing or reviewing JS/TS code. Covers naming, function form, control flow, collections, async style and error handling, plus the tradeoffs in classes, inheritance, loops, memory allocation and caching. Does not cover TypeScript type modeling, module layout, framework components or build and lint config.
 ---
 
 # JavaScript best practices
@@ -45,7 +45,7 @@ Do not reimplement with built-ins what a library or utility in the project alrea
 
 ## Exceptions to the defaults
 
-- Performance: measurement decides. A hot spot is usually a repeated lookup inside a loop, the same data computed several times, or a full pass just to answer a yes-or-no question; see [performance.md](references/performance.md).
+- Performance: measurement decides. A hot spot is usually a repeated lookup inside a loop, the same data computed several times, a full pass just to answer a yes-or-no question, or frequent allocation and long-lived objects; see [performance.md](references/performance.md).
 - Consistency with neighbouring code: an existing in-place function keeps the style around it instead of being rewritten on the way past.
 - The shape of a third-party interface: the vendor only offers a callback API, or fixes the argument order.
 
@@ -62,7 +62,7 @@ Write with the rules above first, and look up the matching document when a speci
 | Number and date precision, strings, equality, deep copies | [values-and-numbers.md](references/values-and-numbers.md) |
 | Sorting and de-duplication, property existence, `Map` or object | [objects-and-collections.md](references/objects-and-collections.md) |
 | How an import is written and what lands in the bundle | [imports.md](references/imports.md) |
-| Repeated lookups in a loop, one pass instead of several, finishing early, when caching pays | [performance.md](references/performance.md) |
+| Repeated lookups in a loop, one pass instead of several, finishing early, memory allocation and object lifetime, when caching pays | [performance.md](references/performance.md) |
 | Concurrency, catching failures, finishing work, throwing and logging | [async-and-errors.md](references/async-and-errors.md) |
 
 ## When the user has to decide
