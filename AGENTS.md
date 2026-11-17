@@ -30,9 +30,10 @@
    `.\scripts\install-skill.ps1 <skill-name> -Agent claude -Dest <临时目录>`。
 8. skill描述和正文要言简并赅，观点和行为明确，不要冗余文字和重复描述，同时表达的话术要去ai化。
 9. skill之间不应该相互依赖，描述不能有其他的skill内容，每个 skill 都是独立的，不能有任何与 agent 相关的内容，例如 `claude` 相关的配置、指令、示例等。
-10. 改了 `description`、适用范围或能力清单，同一处改动里把 `README.md` 和 `README.en.md` 的表格行一起改，不要只改一边。
-11. 中英成对的文件（`README.md` / `README.en.md`、`CONTRIBUTING.md` / `CONTRIBUTING.en.md`）改一份就得改两份，别只改一边。
-12. skill 要问用户决策时，答案写进项目里的 `skill-memory/<skill-name>.md`：需要提问的 skill 在正文里写明，动笔前先读这个文件，命中记录就照做、不再问；
+10. 新增或者修改 skill，或调整其中任一规则时，先核对已有 skill 的触发条件、职责和明确不负责的范围，同时检查是否重复或冲突。重复规则保留已有主责 skill，不复制到本 skill；发现冲突时暂停这部分修改，向用户说明冲突双方的规则和影响，由用户决定采用哪一方、调整范围还是创建新的职责，确认前不自行裁决。同一职责只设一个主责 skill，相邻主题只说明本 skill 的处理范围，不形成规则依赖。
+11. 改了 `description`、适用范围或能力清单，同一处改动里把 `README.md` 和 `README.en.md` 的表格行一起改，不要只改一边。
+12. 中英成对的文件（`README.md` / `README.en.md`、`CONTRIBUTING.md` / `CONTRIBUTING.en.md`）改一份就得改两份，别只改一边。
+13. skill 要问用户决策时，答案写进项目里的 `skill-memory/<skill-name>.md`：需要提问的 skill 在正文里写明，动笔前先读这个文件，命中记录就照做、不再问；
     没记录时把用户答完的结论写进去，只记跨会话还成立的结论和一句理由，不抄对话。一个 skill 一个文件，目录跟项目一起提交，换人换机器都读得到；
     目录和文件没有就新建，答案变了就地改，不留历史，记录和仓库现状冲突时以现状为准并更新记录。
 
