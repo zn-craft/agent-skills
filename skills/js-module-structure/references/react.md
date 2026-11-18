@@ -14,19 +14,18 @@ userCard/
 └── userCard.test.tsx     # render and interaction tests
 ```
 
-A file like `hooks/useUserCard.ts` appears once the logic has a second consumer.
+When requests, subscriptions, timers or reusable logic go into their own file, use a sibling `useXx.ts` or `hooks/useXx.ts`. Whether to extract the file follows the project rules.
 
 ## Points that matter
 
-- File names are lowerCamelCase and component identifiers UpperCamelCase: `userCard.tsx` writes `const UserCard = (props: IUserCardProps) => {...}` and ends with `export { UserCard }`. JSX writes `<UserCard />`, since a lowercase first letter reads as a native tag. When a framework or a lazy import requires a default export, that file changes to `export default UserCard`.
-- Types live in `xx.type.ts` by default: props, state, API structures, enums, and constant value tables. Do not scatter `interface` and `type` through `xx.tsx`.
-- Requests, subscriptions and timers go into `hooks/` or a sibling `useXx.ts`, leaving the component with rendering and event binding.
-- Styles sit beside the component under the same name, with CSS Modules as `userCard.module.css`. A style token shared by several components belongs to a higher-level module, not inside a component directory.
-- The factory in `.mock.ts` returns a complete set of props so tests and stories share it; do not bury business logic in it.
-- Tests keep the repository's framework (vitest or jest) and testing-library, and assert what the user sees rather than internal state.
+- File names are lowerCamelCase and component identifiers UpperCamelCase. When a framework or lazy import requires a default export, use it on the entry that needs it.
+- Types live in `xx.type.ts` by default: props, state, API structures, enums and `as const` value tables. Do not scatter named type declarations through `xx.tsx`.
+- A Hook that is already in its own file uses the `useXx.ts` name and lives beside the module or under `hooks/`.
+- Styles sit beside the component under the same name, with CSS Modules as `userCard.module.css`. A style token shared by several components belongs to a higher-level module.
+- Put mock data and factories in `xx.mock.ts`; put tests in `xx.test.tsx` and follow the project's testing convention.
 - A file reached by routing or lazy loading needs a default export, which is the exception to named exports: `lazy(() => import("./userCard"))` receives the default export. A directory that insists on named exports writes `lazy(() => import("./userCard").then((m) => ({ default: m.UserCard })))`, or lets the route point straight at `userCard.tsx`.
 
-Do not create `hooks/` or `components/` ahead of time for a presentational component with a single consumer; they appear when a second one does.
+Do not create `hooks/` or `components/` ahead of time for a presentational component with a single consumer.
 
 ## What goes in which file
 
@@ -50,7 +49,7 @@ export type UserCardSize = (typeof USER_CARD_SIZE)[number];
 ```
 
 ```ts
-// userCard.config.ts: size mapping and defaults, keeping constants out of the component
+// userCard.config.ts: runtime size mapping and defaults
 import type { UserCardSize } from "./userCard.type";
 
 export const SIZE_CLASS: Record<UserCardSize, string> = {
@@ -62,7 +61,7 @@ export const DEFAULT_SIZE: UserCardSize = "md";
 ```
 
 ```ts
-// userCard.mock.ts: a factory returning complete props, shared by tests and stories
+// userCard.mock.ts: mock props for tests and stories
 import type { IUserCardProps } from "./userCard.type";
 import { EUserStatus } from "./userCard.type";
 
@@ -77,7 +76,7 @@ export const makeUserCardProps = (
 ```
 
 ```tsx
-// userCard.tsx: rendering and interaction only
+// userCard.tsx: component main logic
 import { DEFAULT_SIZE, SIZE_CLASS } from "./userCard.config";
 import type { IUserCardProps } from "./userCard.type";
 
@@ -96,4 +95,4 @@ export { UserCard } from "./userCard";
 export type { IUserCardProps, UserCardSize } from "./userCard.type";
 ```
 
-The component takes types from `userCard.type.ts` and mappings from `userCard.config.ts`; outside the module only `userCard/index.ts` is known, so moving the main logic leaves callers untouched.
+The component takes type and value definitions from `userCard.type.ts` and runtime mappings from `userCard.config.ts`; outside the module only `userCard/index.ts` is known.
