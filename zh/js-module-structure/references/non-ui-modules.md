@@ -1,73 +1,24 @@
 # 不带界面的模块：api、store、hooks、utils
 
-这类模块没有渲染，但文件分工和组件模块完全一致：主逻辑 + 按需补的 `.type` / `.config` / `.mock` / `.test`。
+这里只判断内容落在哪个文件。请求、状态、异步和测试的实现方式沿用项目规则。
 
-## api 模块
+## 文件分工
 
-按资源切文件，一个资源一个文件。
+| 内容 | 默认位置 |
+| --- | --- |
+| 主逻辑 | 与模块基名一致的 `.ts` / `.js`；api 按资源切文件，store 按 store 切文件，hooks / utils 按能力切文件 |
+| 类型、枚举、`as const` 取值表 | `xx.type.ts`；JS 项目使用 JSDoc `@typedef` 或仓库已有约定 |
+| 运行期固定值、映射、默认值 | `xx.config.ts` / `xx.config.js` |
+| mock 数据及生成函数 | `xx.mock.ts` / `xx.mock.js` |
+| 测试 | `xx.test.ts` / `xx.test.js` |
+| 模块入口 | `index.ts` / `index.js`，只做 re-export |
 
-```text
-api/
-├── index.ts
-├── userApi.ts           # 请求函数
-├── userApi.type.ts      # IUser、IUserQuery、IUserListResponse
-├── userApi.config.ts    # USER_API 路径表、DEFAULT_PAGE_SIZE
-├── userApi.mock.ts      # makeUser()，给测试和本地调试用
-└── userApi.test.ts
-```
+文件只在出现对应内容时创建；目录被外部引用时才补入口。
 
-- 请求函数只负责发请求和映射数据，业务判断交给调用方。api 层里不要塞 state 更新、路由跳转。
-- 请求体、响应体、查询参数的类型都写进 `xx.type.ts`，返回类型显式标注，别让调用方去猜。
-- 接口路径表、错误码映射、默认分页大小放 `xx.config.ts`（或模块级 `api/endpoints.config.ts`）。
-- `xx.mock.ts` 导出工厂函数而不是裸对象，参数能覆盖关键分支，测试和 mock 服务复用同一份。
-- 测试用请求适配器 mock（msw 之类），不要 mock 掉自己写的请求函数，那等于没测。
-
-## store 模块
-
-一个 store 一个文件，文件名跟着框架惯例走（Pinia `useUserStore.ts`、Redux `userSlice.ts`、Zustand `useUserStore.ts`）。
-
-```text
-store/
-├── index.ts
-├── useUserStore.ts
-├── useUserStore.type.ts   # State、Action、对外暴露的类型
-└── useUserStore.mock.ts   # makeInitialUserState()
-```
-
-- state、action 的类型写进 `xx.type.ts`，包括 store 对外暴露的返回类型。
-- 初始 state 用 `xx.mock.ts` 里的工厂函数返回，重置 store 和写测试复用同一份，不要在两处各写一份默认值。
-- 异步 action 调 api 模块，不在 store 里直接写 `fetch` / `axios`：请求细节只有 api 层知道。
-- 派生状态用框架自带的 getter / selector，不要在 store 里缓存一份手动同步的副本。
-- 测试断言 action 对 state 的影响；请求部分用 api 层的 mock 兜住。
-
-## hooks / utils 模块
-
-一个能力一个文件，文件名即能力名。
-
-```text
-hooks/
-├── index.ts
-├── useDebounce.ts
-├── useDebounce.type.ts
-└── useDebounce.test.ts
-```
-
-- utils 里只放纯函数，不 import 具体业务模块；一旦要 import 商店或请求，它就该是 hooks 或 store。
-- `xx.config.ts` 在这类模块里通常放缓存 key 前缀、防抖 / 节流的默认时长、可配置的阈值。
-- 通用性不明确时先放调用方旁边，被第二个模块用到再上提到共享目录。
-
-## 跨模块引用
-
-- 同模块内部：相对路径直连目标文件。
-- 跨模块：import 对方的 `index.ts`，不要深挖到 `other/impl/detail.ts`，否则对方的目录调整会波及你。
-- 只被一个模块用的东西放在那个模块里，不要提前放进共享目录。
-
-## 文件内容对照
-
-### api 模块：四个文件各写什么
+## api 示例
 
 ```ts
-// userApi.type.ts：请求与响应的结构全在这里
+// userApi.type.ts
 export interface IUser {
   id: string;
   name: string;
@@ -85,17 +36,28 @@ export interface IUserListResponse {
 ```
 
 ```ts
-// userApi.config.ts：接口路径与默认分页收在一处
+// userApi.config.ts
 export const USER_API = {
   list: "/api/users",
-  detail: (id: string) => `/api/users/${id}`,
-} as const;
+};
 
 export const DEFAULT_PAGE_SIZE = 20;
 ```
 
 ```ts
-// userApi.ts：只拼参数、发请求、返回类型化数据
+// userApi.mock.ts
+import type { IUser } from "./userApi.type";
+
+export const makeUser = (overrides: Partial<IUser> = {}): IUser => ({
+  id: "u_1",
+  name: "张三",
+  ...overrides,
+});
+```
+
+```ts
+// userApi.ts
+import { request } from "../http";
 import { DEFAULT_PAGE_SIZE, USER_API } from "./userApi.config";
 import type { IUserListResponse, IUserQuery } from "./userApi.type";
 
@@ -106,28 +68,23 @@ export const fetchUserList = (
     page: String(query.page ?? 1),
     size: String(DEFAULT_PAGE_SIZE),
   });
-  return http.get<IUserListResponse>(`${USER_API.list}?${params}`);
+
+  if (query.keyword) {
+    params.set("keyword", query.keyword);
+  }
+
+  return request<IUserListResponse>(`${USER_API.list}?${params}`);
 };
 ```
 
-```ts
-// userApi.mock.ts：工厂函数能覆盖关键分支
-import type { IUser } from "./userApi.type";
+`request` 代表项目已有的请求适配器。类型、默认值和接口地址分别从各自文件读取。
 
-export const makeUser = (overrides: Partial<IUser> = {}): IUser => ({
-  id: "u_1",
-  name: "张三",
-  ...overrides,
-});
-```
-
-### hooks 模块：默认值从 config 取
+## hooks 示例
 
 ```ts
 // useDebounce.type.ts
 export interface IUseDebounceOptions {
   delay?: number;
-  leading?: boolean;
 }
 ```
 
@@ -137,15 +94,18 @@ export const DEFAULT_DEBOUNCE_MS = 300;
 ```
 
 ```ts
-// useDebounce.ts：一个文件只写一个能力
+// useDebounce.ts
 import { useEffect, useState } from "react";
 
 import { DEFAULT_DEBOUNCE_MS } from "./useDebounce.config";
 import type { IUseDebounceOptions } from "./useDebounce.type";
 
-export const useDebounce = <T,>(value: T, options: IUseDebounceOptions = {}) => {
+export const useDebounce = <T,>(
+  value: T,
+  options: IUseDebounceOptions = {},
+): T => {
   const { delay = DEFAULT_DEBOUNCE_MS } = options;
-  const [debounced, setDebounced] = useState(value);
+  const [debounced, setDebounced] = useState<T>(() => value);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(value), delay);
@@ -156,4 +116,14 @@ export const useDebounce = <T,>(value: T, options: IUseDebounceOptions = {}) => 
 };
 ```
 
-主逻辑只 import 类型和配置，不反过来被它们依赖；`xx.type.ts` 里不放运行时代码，`xx.config.ts` 里不放副作用。
+## 引用
+
+- 同模块内部直接引用目标文件。
+- 跨模块只引用对方的 `index.ts`。
+- 实现放在使用它的模块里；只有需要供其他模块使用时才放入共享目录，共享层级沿用项目结构。
+
+## 边界
+
+- `xx.type.ts` 可以包含枚举和 `as const` 取值定义，但不执行初始化、注册、IO 等副作用。
+- `xx.config.ts` 只放数据与运行期固定值，不承载执行逻辑。
+- 请求、状态、异步和测试行为按项目规则，不在本文件里另行规定。

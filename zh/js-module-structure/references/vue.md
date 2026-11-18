@@ -13,15 +13,15 @@ userCard/
 └── userCard.test.ts
 ```
 
-`composables/useUserCard.ts` 只在逻辑被第二个组件用到时才拆。
+需要把响应式逻辑放进独立文件时，使用同级 `useXx.ts` 或 `composables/useXx.ts`。是否独立成文件沿用项目规则。
 
 ## 要点
 
 - 文件名小驼峰、组件名大驼峰：`userCard.vue` 的模板里写 `<UserCard />`。
-- `.vue` 文件必须默认导出（框架要求），由 `index.ts` 转成具名导出：`export { default as UserCard } from "./userCard.vue"`。
+- `.vue` 文件由框架默认导出，`index.ts` 可将它转成具名导出：`export { default as UserCard } from "./userCard.vue"`。
 - `defineProps` / `defineEmits` 的类型从 `xx.type.ts` import。类型默认都写在 `xx.type.ts`，不要留在 SFC 里。
-- 可复用的响应式逻辑放 `composables/useXx.ts`，不要在多个组件里复制同一段 `watch` / `computed`。
-- 常量、状态枚举映射放 `xx.config.ts`，用 `as const` 保留字面量类型给 props 做约束。
+- 已经独立成文件的 composable 使用 `useXx.ts` 命名，放在当前模块的同级或 `composables/` 下。
+- 运行期常量、状态映射和默认值放 `xx.config.ts`；类型与 `as const` 取值定义放 `xx.type.ts`。
 - 样式优先写在 SFC 的 `<style scoped>` 里，需要单独成文件时才拆 `xx.css` / `xx.module.css`。
-- 测试沿用仓库既有框架（vitest + @vue/test-utils 等），挂载后断言渲染结果和 emit。
+- mock 放 `xx.mock.ts`，测试放 `xx.test.ts`，具体写法沿用项目测试规范。
 - 状态管理（pinia / vuex）的 store 放模块级的 `store/` 下，不放进组件目录。

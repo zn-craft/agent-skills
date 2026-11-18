@@ -1,38 +1,48 @@
 ---
 name: js-module-structure
-description: Directory, file role and named-export conventions that decide where code goes in non-backend JS/TS projects. Use when creating a module, adding api / store / hooks / utils / pages to a frontend app, adding types, constants, styles or tests to an existing module, or reorganizing directories in React, Vue, Taro or uni-app projects. Not for backend services.
+description: Plan module directories, file roles, code ownership and export relationships for JS/TS frontend apps, component libraries and utility libraries. Use when creating, splitting, moving or reorganizing modules, components and files, or when a change alters existing file responsibilities or import/export relationships. Not for backend projects.
 ---
 
 # JS/TS module structure
 
-One directory is one module. The main logic comes first, and the other files appear as they are needed.
+Decide which file owns each piece of content, how files split, and how the module exports and imports them. Type modeling, component and business behavior, style values and test strategy follow the project's own rules.
 
-A utility library, a component library, and any module inside a frontend app (api, store, hooks, utils, components, pages) share this division of work; whether a framework is involved, and which one, only changes what the main logic file is called. Use it when creating a module, adding files, deciding where new content belongs, and when reorganizing a directory. A team convention that conflicts with this one wins, and what follows is the default. Backend services are out of scope.
+One directory is one module. Utility libraries, component libraries, and an app's api, store, hooks, utils, component and page modules share this division. A framework only changes the main logic filename and required entries, not the other file roles. A conflicting team convention wins; this skill provides defaults.
+
+## Placement workflow
+
+1. Before editing an existing module, inspect the main logic file and same-basename `.type.ts`, `.config.ts`, `.mock.ts`, style and test files. An existing file is the default destination for its role.
+2. When new content belongs to an existing sibling, write it there and import it from the main logic. Do not keep a duplicate declaration or configuration in the main file.
+3. Create a file only when its content actually appears. If file responsibilities do not change, do not add, move or split files.
+4. A feature change can still require structural planning: decide whether props, state, mappings, defaults or mocks cross a file boundary before implementing the feature.
+5. Moving content updates imports and exports with it. When an external entry must remain stable, add the module entry before moving internal implementation.
+
+Files such as `xx.type.ts` and `xx.config.ts` are not a checklist. Do not create empty files, files with one re-export, or directory levels that exist only to complete the structure.
 
 ## File roles
 
-Directory and file names are lowerCamelCase: `userCard/userCard.ts`, `userCard/userCard.tsx`. A component identifier in code is UpperCamelCase (`export { UserCard }`), or JSX and templates treat it as a native tag. A file of fixed constants may be SCREAMING_SNAKE_CASE (`API_CONFIG.ts`). Follow what the repository already does, and do not mix styles inside one directory.
+Directory and file names are lowerCamelCase: `userCard/userCard.ts`, `userCard/userCard.tsx`. A component identifier in code is UpperCamelCase, or JSX and templates treat it as a native tag. Follow existing repository naming and do not mix styles inside one directory.
 
 | File | Role | When to create it |
 | --- | --- | --- |
-| `xx.ts` / `xx.tsx` / `xx.vue` / `xx.js` | Main logic, with the basename matching the directory | Always the first file |
-| `index.ts` | The only entry, re-exporting methods, components, types and constants, named exports by default. Everything outside the module imports from here instead of reaching inside. Follow the framework when it requires this file to hold the main logic (native mini program page and component directories) | When the directory is imported from outside |
-| `xx.config.ts` | Fixed variables, configuration, and pure helpers that are independent of the implementation; no side effects | When hard-coded constants, magic values or reusable pure functions appear |
-| `xx.type.ts` | Type declarations: interface, type, enum, and the type of a constant object | When the module has types to write. They live here by default, with no requirement that they be reused elsewhere before earning a file |
-| `xx.mock.ts` | Mock data and the functions that generate it | When the API is not ready, or test and preview data is needed |
+| `xx.ts` / `xx.tsx` / `xx.vue` / `xx.js` | Main logic with the basename matching the directory. It carries implementation and interaction and does not duplicate declarations or configuration owned by siblings | Always the first file |
+| `index.ts` / `index.js` | Module entry that re-exports by default. Outside code imports here; internal files import their targets directly. A native mini program follows the framework when `index.ts` is the page or component main logic | When the module is imported from outside |
+| `xx.config.ts` / `xx.config.js` | Module-level fixed values, configuration, mappings and defaults with no initialization, registration, I/O or other side effects | When runtime values genuinely need separate ownership |
+| `xx.type.ts` | Type declarations and module value definitions: `interface`, `type`, `enum`, `as const` value tables and their derived types, with no side effects. A JS project uses JSDoc `@typedef` or its existing type-file convention | When those declarations appear. They live here by default, with no reuse threshold |
+| `xx.mock.ts` / `xx.mock.js` | Mock data and the functions that generate it | When tests, previews or integration work need mock data |
 | `xx.json` | Pure static data with no logic | When non-TS consumers need the data. A native mini program cannot import JSON, so the data goes into a `.ts` file instead |
 | `xx.css` / `xx.module.css` | Component-private styles, beside the component and under the same name | When the component has styles. A `styles/` subdirectory comes only when there is more than one style file or the directory is a component library |
-| `xx.test.ts` | Tests, as `xx.test.tsx` when JSX is involved | When tests are worth keeping |
+| `xx.test.ts` / `xx.test.js` / JSX tests | Test file | When the project needs to keep matching tests |
 
-In a JS project without a TS build chain, `xx.type.ts` becomes `xx.d.ts` or JSDoc `@typedef` with the same purpose: types have one clear home instead of being scattered through the main logic.
+`.d.ts` is for declaration files and third-party augmentations, not ordinary internal module types.
 
-Do not create every file this table lists. Its "when to create it" column is the signal to split; empty files, files with a single re-export and directories that exist to look complete are liabilities, and a module with two or three files is normal.
+Enums and `s const tables that define valid values go into `xx.type.ts`. Runtime mappings that turn those values into labels, styles or defaults go into `xx.config.ts`.
 
 ## Common module types
 
 | Module | How the main logic splits | Files that usually come with it |
 | --- | --- | --- |
-| Utility library | One capability per file (`formatDate.ts`), with the directory named after the capability | `index.ts` re-exporting everything, `xx.type.ts`, `xx.test.ts` |
+| Utility library | One capability per file (`formatDate.ts`), with the directory named after the capability | `index.ts`, `xx.type.ts`, `xx.test.ts` |
 | Component library | One component per directory (`userCard/userCard.tsx`) | `xx.type.ts` for props, `xx.config.ts` for size and variant maps, `xx.test.tsx` |
 | api module | One resource per file (`userApi.ts`) | `xx.type.ts` for request and response shapes, `xx.mock.ts`, `index.ts` |
 | store module | One store per file (`useUserStore.ts`) | `xx.type.ts` for state and action types, `xx.mock.ts` for the initial-state factory |
@@ -41,20 +51,30 @@ Do not create every file this table lists. Its "when to create it" column is the
 
 The test is always which responsibility the content carries, never whether it looks like a frontend component.
 
-## Shared conventions
+## Planning example
 
-- `index.ts` exports and does nothing else; files inside the module import each other by relative path straight to the target, never back through `index.ts`, which keeps cycles out.
-- The outside only knows `index.ts`: it exports what outside code may use, and outside code imports only through it (`import { xx } from "@/modules/user"`), never `from "@/modules/user/impl/detail"`. Reaching past the entry drags dependencies across layers and breaks every caller when that directory moves.
+An existing module has only `userCard.tsx`, and a feature adds a constrained set of states, state labels and styles:
+
+- Put the state union, `as const` table and props in a new `userCard.type.ts`.
+- Put the fixed state-to-label and state-to-style mappings in a new `userCard.config.ts`.
+- Keep `userCard.tsx` for rendering, events and applying those mappings.
+- Add the module entry only when outside code needs a stable import, then export the component and public types.
+
+If those siblings already exist, update them instead of adding a second declaration or mapping inside the TSX.
+
+## Exports and imports
+
+- The module entry exports and does nothing else; use `index.ts` in TypeScript projects and `index.js` in JavaScript projects. Files inside the module import each other by relative path straight to the target, never back through the entry, which keeps cycles out.
+- The outside only knows the module entry: it exports what outside code may use, and outside code imports only through it (`import { xx } from "@/modules/user"`), never `from "@/modules/user/impl/detail"`. Reaching past the entry drags dependencies across layers and breaks every caller when that directory moves.
 - Named exports come first; `export default` is for a framework or loader that requires it, such as routing, lazy loading or a page entry. Export order: methods and components, then types, then constants, with types on their own `export type { ... }` line.
-- A component is written `const UserCard = () => {...}` and exported once at the end of the file with `export { UserCard }`, not as a function declaration; an entry file that has to default-export becomes `export default` per the rule above.
-- `index.ts` is the module's outward contract, and for a published library the export surface is a compatibility promise. When refactoring, add to `index.ts` first and move the implementation after, so external import paths stay put.
+- The module entry is the outward contract, and for a published library the export surface is a compatibility promise. When refactoring, add to the entry first and move the implementation after, so external import paths stay put.
 - Subdirectories of a module (`components/`, `hooks/`, `composables/`, `utils/`) follow the same file roles.
 - A test file sits beside its implementation by default, and follows a repository that already keeps them in `__tests__/`.
 
 ## When the user has to decide
 
 - Read the project's `skill-memory/js-module-structure.md` first; a recorded answer is followed without asking again.
-- Ask only when the answer affects the whole repository: which naming style directories and files use, whether every module gets an `index.ts`, and whether type files live in the module or in a shared directory.
+- Ask only when the answer affects the whole repository: which naming style directories and files use, whether every module gets an entry, and whether type files live in the module or in a shared directory.
 - Afterwards write the conclusion and one line of reasoning into that file, one "decision — reason" per line, not the conversation.
 - Everything else follows the current state: what a single module is called, where one file goes, whether this module needs a `.mock.ts`.
 

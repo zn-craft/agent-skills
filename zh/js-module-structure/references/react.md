@@ -14,16 +14,15 @@ userCard/
 └── userCard.test.tsx     # 渲染与交互测试
 ```
 
-`hooks/useUserCard.ts` 这类文件，等逻辑要给别的模块复用时再拆。
+需要把请求、订阅、定时器或复用逻辑放进独立文件时，使用同级 `useXx.ts` 或 `hooks/useXx.ts`。是否独立成文件沿用项目规则。
 
 ## 要点
 
-- 文件名小驼峰，组件标识符用大驼峰：`userCard.tsx` 里默认写 `const UserCard = (props: IUserCardProps) => {...}`，文件末尾 `export { UserCard }`；JSX 里写 `<UserCard />`，小写开头会被当成原生标签。被框架或懒加载要求默认导出时，这个文件改成 `export default UserCard`。
-- 类型默认都写进 `xx.type.ts`：props、state、接口数据结构、枚举、常量取值表。不要把 `interface` / `type` 散落在 `xx.tsx` 里。
-- 请求、订阅、定时器放 `hooks/` 或同级 `useXx.ts`，组件只负责渲染和事件绑定。
+- 文件名小驼峰，组件标识符用大驼峰。被框架或懒加载要求默认导出时，入口文件改用 `export default`。
+- 类型默认都写进 `xx.type.ts`：props、state、接口数据结构、枚举和 `as const` 取值表。不要把具名类型声明散落在 `xx.tsx` 里。
+- 已经独立成文件的 Hook 使用 `useXx.ts` 命名，放在当前模块的同级或 `hooks/` 下。
 - 样式与组件同级同名，CSS Modules 用 `userCard.module.css`。多个组件共用的样式令牌放上层模块，不要放组件目录里。
-- `.mock.ts` 导出的工厂函数返回一份完整的 props，方便测试和 story 复用；不要在里面写死业务逻辑。
-- 测试沿用仓库既有框架（vitest / jest）+ testing-library，优先断言用户可见行为，不要断言内部 state。
+- mock 数据及其生成函数放 `xx.mock.ts`；测试放 `xx.test.tsx`，具体写法沿用项目测试规范。
 - 路由 / 懒加载指向的文件要默认导出，这是具名导出的例外：`lazy(() => import("./userCard"))` 拿到的是默认导出。目录坚持具名导出时，用 `lazy(() => import("./userCard").then((m) => ({ default: m.UserCard })))`，或者让路由直接指向 `userCard.tsx`。
 
 只有一个消费者的展示型组件不要提前建 `hooks/`、`components/`，等第二个使用者出现再抽。
@@ -77,7 +76,7 @@ export const makeUserCardProps = (
 ```
 
 ```tsx
-// userCard.tsx：只处理渲染与交互
+// userCard.tsx：组件主逻辑
 import { DEFAULT_SIZE, SIZE_CLASS } from "./userCard.config";
 import type { IUserCardProps } from "./userCard.type";
 

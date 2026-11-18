@@ -22,10 +22,9 @@ src/
     └── deepMerge.test.ts
 ```
 
-- 顶层 `src/index.ts` 只 re-export 各能力的 `index.ts`，别让它顺手写实现。
-- 默认无副作用：import 时不要读环境变量、写全局、注册监听，否则会破坏 tree-shaking 和测试。确需初始化的，导出显式 `init()` 让调用方自己调。
+- 顶层 `src/index.ts` 只 re-export 各能力的 `index.ts`，不写实现。
 - 一个能力只导出一个概念，`deepMerge` 这类目录不要再拉出 `objectUtils`、`commonUtils` 桶目录。
-- 单测跟实现同级，覆盖率要求比业务代码高，因为对外承诺稳定。
+- 测试文件跟实现同级；测试工具和覆盖要求沿用项目规则。
 
 ## 组件库
 
@@ -48,7 +47,7 @@ src/
 
 - 组件目录和文件名同样用小驼峰（`button/button.tsx`），代码里的组件名用大驼峰。
 - props 类型必须对外导出，类型就是组件库 API 的一部分。
-- `variant` / `size` 这类映射放 `xx.config.ts`，用 `as const` 保留字面量类型给 props 做约束，不要写成散落的 `if`。
+- `variant` / `size` 这类运行期映射放 `xx.config.ts`；取值定义和派生类型放 `xx.type.ts`。
 - 跨组件的共享内容（主题令牌、`useControllableState` 这类通用 hook）放上层模块，不要从 `button/` 里反向 import，避免组件之间互相依赖。
 
 ## 多框架组件库
@@ -63,4 +62,4 @@ src/
 
 - 不要为了"以后可能扩展"提前建 `utils/`、`helpers/`、`constants/` 这类通用桶，它们最后会变成什么都往里塞的垃圾场。
 - 不要把内部实现文件暴露成公开导出（`export * from "./internal/xxx"`），一旦有人依赖就改不动了。
-- 不要在补丁版本里删改导出；只能新增，废弃的用标记提示并留一个版本。
+- 导出面的兼容策略沿用项目的版本管理规则。
